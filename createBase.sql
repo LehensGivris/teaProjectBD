@@ -12,7 +12,10 @@ CREATE TABLE Photographgie(
 	notes VARCHAR(65535),
 	date INTEGER,
 	RemarqueidRemarque INTEGER,
-	PRIMARY KEY(id)
+	PRIMARY KEY(id),
+	FOREIGN KEY (discriminant) REFERENCES Discriminant(discriminant),
+	FOREIGN KEY (date) REFERENCES Date(id),
+	FOREIGN KEY (RemarqueidRemarque) REFERENCES Remarque(idRemarque)
 );
 
 CREATE TABLE Discriminant(
@@ -39,7 +42,10 @@ CREATE TABLE Support(
 	taille VARCHAR(255),
 	nr VARCHAR(255),
 	NoirBlancOrColor VARCHAR(7),
-	PRIMARY KEY(id)
+	PRIMARY KEY(id),
+	FOREIGN KEY (idphoto) REFERENCES Photographgie(id),
+	FOREIGN KEY (taille) REFERENCES Taille(taille),
+	FOREIGN KEY (nr) REFERENCES NegatifOuReversible(nr)
 );
 
 CREATE TABLE NegatifOuReversible(
@@ -55,7 +61,9 @@ CREATE TABLE Taille(
 CREATE TABLE Photographgie_Lieu(
 	Photographgieid INTEGER,
 	LambertId INTEGER,
-	PRIMARY KEY(Photographgieid,LambertId)
+	PRIMARY KEY(Photographgieid,LambertId),
+	FOREIGN KEY (Photographgieid) REFERENCES Photographgie(id),
+	FOREIGN KEY (LambertId) REFERENCES Lambert93(refLieux)
 );
 
 CREATE TABLE Lambert93(
@@ -71,7 +79,9 @@ CREATE TABLE Lambert93(
 CREATE TABLE Fichier_Photographie(
 	FichieridFichier INTEGER,
 	Photographgieid INTEGER,
-	PRIMARY KEY(FichieridFichier,Photographgieid)
+	PRIMARY KEY(FichieridFichier,Photographgieid),
+	FOREIGN KEY (FichieridFichier) REFERENCES Fichier(idFichier),
+	FOREIGN KEY (Photographgieid) REFERENCES Photographgie(id)
 );
 
 CREATE TABLE Fichier(
@@ -83,7 +93,9 @@ CREATE TABLE Fichier(
 CREATE TABLE Iconographie_Photographie(
 	IconographieIndex VARCHAR(255),
 	Photographgieid INTEGER,
-	PRIMARY KEY(IconographieIndex,Photographgieid)
+	PRIMARY KEY(IconographieIndex,Photographgieid),
+	FOREIGN KEY (IconographieIndex) REFERENCES Iconographie(Index),
+	FOREIGN KEY (Photographgieid) REFERENCES Photographgie(id)
 );
 
 CREATE TABLE Iconographie(
