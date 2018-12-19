@@ -43,5 +43,27 @@ CREATE TABLE Support(
 );
 
 CREATE TABLE NegatifOuReversible(
-	
+	nr VARCHAR(255),
+	PRIMARY KEY(nr)
+);
+
+CREATE TABLE Taille(
+	taille VARCHAR(255),
+	PRIMARY KEY(taille)
+);
+
+CREATE TABLE Photographgie_Lieu(
+	Photographgieid INTEGER(10),
+	LambertId INTEGER(10),
+	PRIMARY KEY(Photographgie_Lieu,LambertId)
+);
+
+CREATE TABLE Lambert93(
+	refLieux INTEGER(10),
+	codeInsee INTEGER(10),
+	codePostal INTEGER(10),
+	nom VARCHAR(255),
+	CoordX INTEGER(10),
+	CoordY INTEGER(10),
+	PRIMARY KEY(refLieux)
 );
