@@ -10,7 +10,7 @@ CREATE TABLE Photographgie(
 	discriminant VARCHAR(255),
 	description VARCHAR(65535),
 	notes VARCHAR(65535),
-	'date' INTEGER,
+	date INTEGER,
 	RemarqueidRemarque INTEGER,
 	PRIMARY KEY(id)
 );
@@ -79,4 +79,7 @@ CREATE TABLE Fichier(
 	NomFichier VARCHAR(255),
 	PRIMARY KEY(idFichier)
 );
+
+CREATE TABLE Iconographie
+
 
