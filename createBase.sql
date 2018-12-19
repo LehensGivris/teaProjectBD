@@ -3,7 +3,7 @@ set datestyle to 'european';
 DROP TABLE IF EXISTS Photographgie, Discriminant, Support;
 
 CREATE TABLE Photographgie(
-	id INTEGER(10),
+	id SERIAL,
 	cindoc VARCHAR(255),
 	serie VARCHAR(255),
 	article INTEGER(10),
@@ -21,19 +21,19 @@ CREATE TABLE Discriminant(
 );
 
 CREATE TABLE Date(
-	id INTEGER(10),
+	id SERIAL,
 	jour INTEGER(10),
 	mois INTEGER(10),
 	annee INTEGER(10)
 );
 
 CREATE TABLE Remarque(
-	idRemarque INTEGER(10),
+	idRemarque SERIAL,
 	remarque VARCHAR(255)
 );
 
 CREATE TABLE Support(
-	id INTEGER(10),
+	id SERIAL,
 	idphoto INTEGER(10),
 	nbcliche INTEGER(10),
 	taille VARCHAR(255),
