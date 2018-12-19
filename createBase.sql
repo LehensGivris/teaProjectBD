@@ -1,4 +1,4 @@
-set datestyle to 'european';
+SET datestyle TO 'european';
 
 DROP TABLE IF EXISTS Photographgie, Discriminant, Support;
 
@@ -97,3 +97,34 @@ CREATE TABLE Sujet_Photographie(
 	PRIMARY KEY(SujetIdsujet,Photographgieid)
 );
 
+CREATE TABLE Sujet(
+	idSujet INTEGER,
+	sujet VARCHAR(65535)
+);
+
+CREATE TABLE Personne_Photographie(
+	Personnepersonne VARCHAR(255),
+	Photographgieid INTEGER,
+	PRIMARY KEY(Personnepersonne,Photographgieid)
+);
+
+CREATE TABLE Personne(
+	personne VARCHAR(255), -- Nom de la personne ou Notes ou Representation
+	Nom VARCHAR(255),
+	Prenom VARCHAR(255),
+	Representation VARCHAR(255),
+	Notes VARCHAR(255),
+	PRIMARY KEY(personne)
+);
+
+CREATE TABLE Personne_Metier(
+	Personnepersonne VARCHAR(255),
+	MetieridMetier INTEGER,
+	PRIMARY KEY(Personnepersonne,MetieridMetier)
+);
+
+CREATE TABLE Metier(
+	idMetier INTEGER,
+	Designation VARCHAR(255),
+	PRIMARY KEY(idMetier)
+);
