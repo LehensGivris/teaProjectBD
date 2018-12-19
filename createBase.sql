@@ -55,7 +55,7 @@ CREATE TABLE Taille(
 CREATE TABLE Photographgie_Lieu(
 	Photographgieid INTEGER,
 	LambertId INTEGER,
-	PRIMARY KEY(Photographgie_Lieu,LambertId)
+	PRIMARY KEY(Photographgieid,LambertId)
 );
 
 CREATE TABLE Lambert93(
