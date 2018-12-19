@@ -106,7 +106,9 @@ CREATE TABLE Iconographie(
 CREATE TABLE Sujet_Photographie(
 	SujetIdsujet INTEGER,
 	Photographgieid INTEGER,
-	PRIMARY KEY(SujetIdsujet,Photographgieid)
+	PRIMARY KEY(SujetIdsujet,Photographgieid),
+	FOREIGN KEY (SujetIdsujet) REFERENCES Sujet(idSujet),
+	FOREIGN KEY (Photographgieid) REFERENCES Photographgie(id)
 );
 
 CREATE TABLE Sujet(
@@ -117,7 +119,9 @@ CREATE TABLE Sujet(
 CREATE TABLE Personne_Photographie(
 	Personnepersonne VARCHAR(255),
 	Photographgieid INTEGER,
-	PRIMARY KEY(Personnepersonne,Photographgieid)
+	PRIMARY KEY(Personnepersonne,Photographgieid),
+	FOREIGN KEY (Personnepersonne) REFERENCES Personne(personne),
+	FOREIGN KEY (Photographgieid) REFERENCES Photographgie(id)
 );
 
 CREATE TABLE Personne(
@@ -132,7 +136,9 @@ CREATE TABLE Personne(
 CREATE TABLE Personne_Metier(
 	Personnepersonne VARCHAR(255),
 	MetieridMetier INTEGER,
-	PRIMARY KEY(Personnepersonne,MetieridMetier)
+	PRIMARY KEY(Personnepersonne,MetieridMetier),
+	FOREIGN KEY (Personnepersonne) REFERENCES Personne(personne),
+	FOREIGN KEY (MetieridMetier) REFERENCES Metier(idMetier)
 );
 
 CREATE TABLE Metier(
