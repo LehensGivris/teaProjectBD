@@ -1,6 +1,6 @@
 SET datestyle TO 'european';
 
-DROP TABLE IF EXISTS Photographgie, Discriminant, Support;
+DROP TABLE IF EXISTS Photographgie, Discriminant, Date, Remarque, Support, NegatifOuReversible, Taille, Photographgie_Lieu, Lambert93, Fichier_Photographie, Fichier, Iconographie_Photographie, Iconographie, Sujet_Photographie, Sujet, Personne_Photographie, Personne, Personne_Metier, Metier;
 
 CREATE TABLE Photographgie(
 	id SERIAL,
