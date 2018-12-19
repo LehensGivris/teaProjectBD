@@ -12,12 +12,14 @@ CREATE TABLE Date(
 	id SERIAL,
 	jour INTEGER,
 	mois INTEGER,
-	annee INTEGER
+	annee INTEGER,
+	PRIMARY KEY(id)
 );
 
 CREATE TABLE Remarque(
 	idRemarque SERIAL,
-	remarque VARCHAR(255)
+	remarque VARCHAR(255),
+	PRIMARY KEY(idRemarque)
 );
 
 CREATE TABLE Photographgie(
