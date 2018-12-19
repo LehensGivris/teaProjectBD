@@ -80,6 +80,20 @@ CREATE TABLE Fichier(
 	PRIMARY KEY(idFichier)
 );
 
-CREATE TABLE Iconographie
+CREATE TABLE Iconographie_Photographie(
+	IconographieIndex VARCHAR(255),
+	Photographgieid INTEGER,
+	PRIMARY KEY(IconographieIndex,Photographgieid)
+);
 
+CREATE TABLE Iconographie(
+	Index VARCHAR(255),
+	PRIMARY KEY(Index)
+);
+
+CREATE TABLE Sujet_Photographie(
+	SujetIdsujet INTEGER,
+	Photographgieid INTEGER,
+	PRIMARY KEY(SujetIdsujet,Photographgieid)
+);
 
