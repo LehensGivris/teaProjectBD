@@ -6,12 +6,12 @@ CREATE TABLE Photographgie(
 	id SERIAL,
 	cindoc VARCHAR(255),
 	serie VARCHAR(255),
-	article INTEGER(10),
+	article INTEGER,
 	discriminant VARCHAR(255),
 	description VARCHAR(65535),
 	notes VARCHAR(65535),
-	'date' INTEGER(10),
-	RemarqueidRemarque INTEGER(10),
+	'date' INTEGER,
+	RemarqueidRemarque INTEGER,
 	PRIMARY KEY(id)
 );
 
@@ -22,9 +22,9 @@ CREATE TABLE Discriminant(
 
 CREATE TABLE Date(
 	id SERIAL,
-	jour INTEGER(10),
-	mois INTEGER(10),
-	annee INTEGER(10)
+	jour INTEGER,
+	mois INTEGER,
+	annee INTEGER
 );
 
 CREATE TABLE Remarque(
@@ -34,8 +34,8 @@ CREATE TABLE Remarque(
 
 CREATE TABLE Support(
 	id SERIAL,
-	idphoto INTEGER(10),
-	nbcliche INTEGER(10),
+	idphoto INTEGER,
+	nbcliche INTEGER,
 	taille VARCHAR(255),
 	nr VARCHAR(255),
 	NoirBlancOrColor VARCHAR(7),
@@ -53,24 +53,24 @@ CREATE TABLE Taille(
 );
 
 CREATE TABLE Photographgie_Lieu(
-	Photographgieid INTEGER(10),
-	LambertId INTEGER(10),
+	Photographgieid INTEGER,
+	LambertId INTEGER,
 	PRIMARY KEY(Photographgie_Lieu,LambertId)
 );
 
 CREATE TABLE Lambert93(
-	refLieux INTEGER(10),
-	codeInsee INTEGER(10),
-	codePostal INTEGER(10),
+	refLieux INTEGER,
+	codeInsee INTEGER,
+	codePostal INTEGER,
 	nom VARCHAR(255),
-	CoordX INTEGER(10),
-	CoordY INTEGER(10),
+	CoordX INTEGER,
+	CoordY INTEGER,
 	PRIMARY KEY(refLieux)
 );
 
 CREATE TABLE Fichier_Photographie(
-	FichieridFichier INTEGER(10),
-	Photographgieid INTEGER(10),
+	FichieridFichier INTEGER,
+	Photographgieid INTEGER,
 	PRIMARY KEY(FichieridFichier,Photographgieid)
 );
 
