@@ -67,3 +67,16 @@ CREATE TABLE Lambert93(
 	CoordY INTEGER(10),
 	PRIMARY KEY(refLieux)
 );
+
+CREATE TABLE Fichier_Photographie(
+	FichieridFichier INTEGER(10),
+	Photographgieid INTEGER(10),
+	PRIMARY KEY(FichieridFichier,Photographgieid)
+);
+
+CREATE TABLE Fichier(
+	idFichier SERIAL,
+	NomFichier VARCHAR(255),
+	PRIMARY KEY(idFichier)
+);
+
