@@ -1,19 +1,17 @@
 SET datestyle TO 'european';
 
-DROP TABLE IF EXISTS Photographgie_Lieu, Fichier_Photographie, Iconographie_Photographie, Sujet_Photographie, Personne_Photographie, Personne_Metier;
-DROP TABLE IF EXISTS Discriminant, Date, Remarque, Photographgie, NegatifOuReversible, Taille, Support, Lambert93, Fichier, Iconographie, Sujet, Personne, Metier;
+-- Tables Liens
+DROP TABLE IF EXISTS Photographgie_Lieu, Fichier_Photographie, Iconographie_Photographie, Sujet_Photographie, Personne_Photographie, Personne_Metier, Photographgie_Date;
+
+-- Tables "Clé Etrangère"
+DROP TABLE IF EXISTS Discriminant, Remarque;
+
+-- Tables Basiques
+DROP TABLE IF EXISTS Date, Photographgie, NegatifOuReversible, Taille, Support, Lambert93, Fichier, Iconographie, Sujet, Personne, Metier;
 
 CREATE TABLE Discriminant(
 	discriminant VARCHAR(255),
 	PRIMARY KEY(discriminant)
-);
-
-CREATE TABLE Date(
-	id SERIAL,
-	jour INTEGER,
-	mois INTEGER,
-	annee INTEGER,
-	PRIMARY KEY(id)
 );
 
 CREATE TABLE Remarque(
@@ -36,6 +34,17 @@ CREATE TABLE Photographgie(
 	FOREIGN KEY (discriminant) REFERENCES Discriminant(discriminant),
 	FOREIGN KEY (date) REFERENCES Date(id),
 	FOREIGN KEY (RemarqueidRemarque) REFERENCES Remarque(idRemarque)
+);
+
+CREATE TABLE Date(
+	id SERIAL,
+	jour INTEGER,
+	jour_bis INTEGER,
+	mois INTEGER,
+	mois_bis INTEGER,
+	annee INTEGER,
+	annee_bis INTEGER,
+	PRIMARY KEY(id)
 );
 
 CREATE TABLE NegatifOuReversible(
