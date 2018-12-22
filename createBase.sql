@@ -57,11 +57,11 @@ CREATE TABLE Taille(
 
 CREATE TABLE Support(
 	id_support SERIAL,
-	id_photo INTEGER,
-	nbcliche INTEGER,
-	taille VARCHAR(255),
-	nr VARCHAR(255),
-	NoirBlancOrColor VARCHAR(7),
+	id_photo INTEGER NOT NULL,
+	nbcliche INTEGER NOT NULL,
+	taille VARCHAR(255) NOT NULL,
+	nr VARCHAR(255) NOT NULL,
+	NoirBlancOrColor VARCHAR(7) NOT NULL,
 	PRIMARY KEY(id),
 	FOREIGN KEY (id_photo) REFERENCES Photographgie(id_photo),
 	FOREIGN KEY (taille) REFERENCES Taille(taille),
@@ -71,16 +71,16 @@ CREATE TABLE Support(
 CREATE TABLE Lambert93(
 	ref_lieux INTEGER,
 	codeInsee INTEGER,
-	codePostal INTEGER,
-	nom VARCHAR(255),
-	CoordX INTEGER,
-	CoordY INTEGER,
+	codePostal INTEGER NOT NULL,
+	nom VARCHAR(255) NOT NULL,
+	CoordX INTEGER NOT NULL,
+	CoordY INTEGER NOT NULL,
 	PRIMARY KEY(ref_lieux)
 );
 
 CREATE TABLE Fichier(
 	id_fichier SERIAL,
-	NomFichier VARCHAR(255),
+	NomFichier VARCHAR(255) NOT NULL,
 	PRIMARY KEY(id_fichier)
 );
 
@@ -91,7 +91,7 @@ CREATE TABLE Iconographie(
 
 CREATE TABLE Sujet(
 	id_sujet INTEGER,
-	sujet VARCHAR(65535),
+	sujet VARCHAR(65535) NOT NULL,
 	PRIMARY KEY(id_sujet)
 );
 
@@ -100,13 +100,13 @@ CREATE TABLE Personne(
 	Nom VARCHAR(255),
 	Prenom VARCHAR(255),
 	Representation VARCHAR(255),
-	Notes VARCHAR(255),
+	Notes VARCHAR(4096),
 	PRIMARY KEY(id_pers)
 );
 
 CREATE TABLE Metier(
 	id_metier INTEGER,
-	Designation VARCHAR(255),
+	Designation VARCHAR(255) NOT NULL,
 	PRIMARY KEY(id_metier)
 );
 
@@ -119,43 +119,43 @@ CREATE TABLE Photographgie_Lieu(
 );
 
 CREATE TABLE Fichier_Photographie(
-	id_fichier INTEGER,
 	id_photo INTEGER,
-	PRIMARY KEY(id_fichier,id_photo),
+	id_fichier INTEGER,
+	PRIMARY KEY(id_photo,id_fichier),
 	FOREIGN KEY (id_fichier) REFERENCES Fichier(id_fichier),
 	FOREIGN KEY (id_photo) REFERENCES Photographgie(id_photo)
 );
 
 CREATE TABLE Iconographie_Photographie(
-	IconographieIndex VARCHAR(255),
 	id_photo INTEGER,
-	PRIMARY KEY(IconographieIndex,id_photo),
-	FOREIGN KEY (IconographieIndex) REFERENCES Iconographie(Index),
+	index_icono VARCHAR(255),
+	PRIMARY KEY(id_photo,index_icono),
+	FOREIGN KEY (index_icono) REFERENCES Iconographie(index_icono),
 	FOREIGN KEY (id_photo) REFERENCES Photographgie(id_photo)
 );
 
 CREATE TABLE Sujet_Photographie(
-	SujetIdsujet INTEGER,
 	id_photo INTEGER,
-	PRIMARY KEY(SujetIdsujet,id_photo),
-	FOREIGN KEY (SujetIdsujet) REFERENCES Sujet(idSujet),
+	id_sujet INTEGER,
+	PRIMARY KEY(id_photo,id_sujet),
+	FOREIGN KEY (id_sujet) REFERENCES Sujet(id_sujet),
 	FOREIGN KEY (id_photo) REFERENCES Photographgie(id_photo)
 );
 
 CREATE TABLE Personne_Photographie(
-	Personnepersonne VARCHAR(255),
 	id_photo INTEGER,
-	PRIMARY KEY(Personnepersonne,id_photo),
-	FOREIGN KEY (Personnepersonne) REFERENCES Personne(personne),
+	id_pers VARCHAR(255),
+	PRIMARY KEY(id_photo,id_pers),
+	FOREIGN KEY (id_pers) REFERENCES Personne(id_pers),
 	FOREIGN KEY (id_photo) REFERENCES Photographgie(id_photo)
 );
 
 CREATE TABLE Personne_Metier(
-	Personnepersonne VARCHAR(255),
-	MetieridMetier INTEGER,
-	PRIMARY KEY(Personnepersonne,MetieridMetier),
-	FOREIGN KEY (Personnepersonne) REFERENCES Personne(personne),
-	FOREIGN KEY (MetieridMetier) REFERENCES Metier(idMetier)
+	id_pers VARCHAR(255),
+	id_metier INTEGER,
+	PRIMARY KEY(id_pers,id_metier),
+	FOREIGN KEY (id_pers) REFERENCES Personne(id_pers),
+	FOREIGN KEY (id_metier) REFERENCES Metier(id_metier)
 );
 
 CREATE TABLE Photographgie_Date(
