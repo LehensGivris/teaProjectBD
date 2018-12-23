@@ -451,7 +451,7 @@ begin
 							loop
 								IF tmp3 IS NOT NULL THEN
 									IF tmp3 ~ '[A-Z]{1,},' THEN
-										pers_Nom := (SELECT REPLACE(tmp3),',','');
+										pers_Nom := (SELECT REPLACE(tmp3,',',''));
 									END IF;
 
 									IF tmp3 ~ '[A-Z]{1}[a-z]{1,}' THEN
@@ -473,8 +473,10 @@ begin
 												END IF;
 											END IF;
 										END IF;
-										IF NOT EXISTS(SELECT * FROM Personne_Metier WHERE id_pers=pers_id AND id_metier = metier_id) THEN
-											INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
+										IF pers_id IS NOT NULL AND metier_id IS NOT NULL THEN
+											IF NOT EXISTS(SELECT * FROM Personne_Metier WHERE id_pers=pers_id AND id_metier = metier_id) THEN
+												INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
+											END IF;
 										END IF;
 									END IF;
 
