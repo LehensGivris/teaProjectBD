@@ -252,7 +252,7 @@ begin
     	where discriminant = new.Disc) then
     	insert into Discriminant values (new.Disc);
     end if;
-	
+
     --remarque
     if new.Remarq is not null then
     	if not exists (select * from Remarque
@@ -296,8 +296,8 @@ begin
 					CASE
 						WHEN cardinality(date_cache) = 3 THEN
 							IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
-								date_j := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[1];
-								date_j_b := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[2];
+								date_j := to_number(((regexp_split_to_array(date_cache[1],'-'))[1]),'9999');
+								date_j_b := to_number(((regexp_split_to_array(date_cache[1],'-'))[2]),'9999');
 							ELSE
 								date_j := (to_number(date_cache[1],'9999'));
 							END IF;
@@ -310,8 +310,8 @@ begin
 							END IF;
 
 							IF cardinality(regexp_split_to_array(date_cache[3],'-')) = 2 THEN
-								date_a := (to_number(regexp_split_to_array(date_cache[3],'-'),'9999'))[1];
-								date_a_b := (to_number(regexp_split_to_array(date_cache[3],'-'),'9999'))[2];
+								date_a := to_number(((regexp_split_to_array(date_cache[3],'-'))[1]),'9999');
+								date_a_b := to_number(((regexp_split_to_array(date_cache[3],'-'))[2]),'9999');
 							ELSE
 								date_a := (to_number(date_cache[3],'9999'));
 							END IF;
@@ -324,15 +324,15 @@ begin
 							END IF;
 
 							IF cardinality(regexp_split_to_array(date_cache[2],'-')) = 2 THEN
-								date_a := (to_number(regexp_split_to_array(date_cache[2],'-'),'9999'))[1];
-								date_a_b := (to_number(regexp_split_to_array(date_cache[2],'-'),'9999'))[2];
+								date_a := to_number(((regexp_split_to_array(date_cache[2],'-'))[1]),'9999');
+								date_a_b := to_number(((regexp_split_to_array(date_cache[2],'-'))[2]),'9999');
 							ELSE
 								date_a := (to_number(date_cache[2],'9999'));
 							END IF;
 						WHEN cardinality(date_cache) = 1 THEN
 							IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
-								date_a := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[1];
-								date_a_b := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[2];
+								date_a := to_number(((regexp_split_to_array(date_cache[1],'-'))[1]),'9999');
+								date_a_b := to_number(((regexp_split_to_array(date_cache[1],'-'))[2]),'9999');
 							ELSE
 								date_a := (to_number(date_cache[1],'9999'));
 							END IF;
