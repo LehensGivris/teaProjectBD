@@ -127,7 +127,7 @@ CREATE TABLE Sujet(
 );
 
 CREATE TABLE Personne(
-	id_pers VARCHAR(255), -- Nom de la personne ou Notes ou Representation
+	id_pers SERIAL,
 	Nom VARCHAR(255),
 	Prenom VARCHAR(255),
 	Representation VARCHAR(255),
@@ -136,7 +136,7 @@ CREATE TABLE Personne(
 );
 
 CREATE TABLE Metier(
-	id_metier INTEGER,
+	id_metier SERIAL,
 	Designation VARCHAR(255) NOT NULL,
 	PRIMARY KEY(id_metier)
 );
@@ -175,14 +175,14 @@ CREATE TABLE Sujet_Photographie(
 
 CREATE TABLE Personne_Photographie(
 	id_photo INTEGER,
-	id_pers VARCHAR(255),
+	id_pers INTEGER,
 	PRIMARY KEY(id_photo,id_pers),
 	FOREIGN KEY (id_pers) REFERENCES Personne(id_pers),
 	FOREIGN KEY (id_photo) REFERENCES Photographie(id_photo)
 );
 
 CREATE TABLE Personne_Metier(
-	id_pers VARCHAR(255),
+	id_pers INTEGER,
 	id_metier INTEGER,
 	PRIMARY KEY(id_pers,id_metier),
 	FOREIGN KEY (id_pers) REFERENCES Personne(id_pers),
@@ -211,6 +211,7 @@ returns trigger as $$
 declare
     tmp text;
     tmp2 text;
+	tmp3 text;
     --remarque
     remarque_id int;
     --photographie
@@ -242,7 +243,13 @@ declare
     --sujet
     sujet_id int;
     --personne
-    
+    pers_id int;
+	pers_Nom text;
+	pers_Prenom text;
+
+	--metier
+	metier_id int;
+
     --lambert
     lamb_id int;
 	maxId int;
@@ -291,7 +298,7 @@ begin
 			foreach tmp2 in array regexp_split_to_array(tmp,'/')
 			loop
 				if tmp2 is not null then
-					SELECT regexp_split_to_array(ltrim(tmp2,'Prise de vue: '),' ') INTO date_cache;
+					SELECT regexp_split_to_array(ltrim(tmp2,'Prise de vue:'),' ') INTO date_cache;
 
 					CASE
 						WHEN cardinality(date_cache) = 3 THEN
@@ -390,37 +397,37 @@ begin
     --fichier
 	IF NEW.FichierN IS NOT NULL THEN
 		SELECT REPLACE(NEW.FichierN,' | ','/ ') INTO tmp;
-	END IF;
-	IF tmp IS NOT NULL AND regexp_split_to_array(tmp,'/') IS NOT NULL THEN
-		foreach tmp2 in array regexp_split_to_array(tmp,'/')
-		loop
-			if tmp2 is not null then
-				if not exists (select * from Fichier where NomFichier=new.FichierN) then
-					insert into Fichier(NomFichier) values (tmp2) returning id_fichier into fichier_id;
-				else
-					fichier_id := (select MIN(id_fichier) from Fichier where NomFichier=new.FichierN);
+		IF tmp IS NOT NULL AND regexp_split_to_array(tmp,'/') IS NOT NULL THEN
+			foreach tmp2 in array regexp_split_to_array(tmp,'/')
+			loop
+				if tmp2 is not null then
+					if not exists (select * from Fichier where NomFichier=new.FichierN) then
+						insert into Fichier(NomFichier) values (tmp2) returning id_fichier into fichier_id;
+					else
+						fichier_id := (select MIN(id_fichier) from Fichier where NomFichier=new.FichierN);
+					end if;
+					insert into Fichier_Photographie values(photo_id,fichier_id);
 				end if;
-				insert into Fichier_Photographie values(photo_id,fichier_id);
-			end if;
-		end loop;
+			end loop;
+		END IF;
 	END IF;
 
     --iconographie
 	IF NEW.IndexIco IS NOT NULL THEN
 		SELECT REPLACE(NEW.IndexIco,' | ','/ ') INTO tmp;
-	END IF;
-	IF regexp_split_to_array(tmp,'/ ') IS NOT NULL THEN
-		foreach tmp2 in array regexp_split_to_array(tmp,'/ ')
-		loop
-			if tmp2 is not null then
-				if not exists (select index_icono from Iconographie where index_icono=tmp2) then
-					insert into Iconographie values (tmp2);
+		IF regexp_split_to_array(tmp,'/ ') IS NOT NULL THEN
+			foreach tmp2 in array regexp_split_to_array(tmp,'/ ')
+			loop
+				if tmp2 is not null then
+					if not exists (select index_icono from Iconographie where index_icono=tmp2) then
+						insert into Iconographie values (tmp2);
+					end if;
+					IF NOT EXISTS (SELECT index_icono FROM Iconographie_Photographie WHERE index_icono = tmp2) THEN
+						insert into Iconographie_Photographie values(photo_id,tmp2);
+					END IF;
 				end if;
-				IF NOT EXISTS (SELECT index_icono FROM Iconographie_Photographie WHERE index_icono = tmp2) THEN
-					insert into Iconographie_Photographie values(photo_id,tmp2);
-				END IF;
-			end if;
-		end loop;
+			end loop;
+		END IF;
 	END IF;
 	
     --sujet
@@ -433,8 +440,55 @@ begin
     	insert into Sujet_Photographie values(photo_id,sujet_id);
     end if;
 
-    --personne
-    
+    --personne and metier
+    IF NEW.IndexP IS NOT NULL THEN
+		IF regexp_split_to_array(NEW.IndexP,'/ ') IS NOT NULL THEN
+			foreach tmp2 in array regexp_split_to_array(NEW.IndexP,'/ ')
+			loop
+				if tmp2 is not null then
+					IF regexp_split_to_array(tmp2,' ') IS NOT NULL THEN
+						foreach tmp3 in array regexp_split_to_array(tmp2,' ')
+							loop
+								IF tmp3 IS NOT NULL THEN
+									IF tmp3 ~ '[A-Z]{1,},' THEN
+										pers_Nom := (SELECT REPLACE(tmp3),',','');
+									END IF;
+
+									IF tmp3 ~ '[A-Z]{1}[a-z]{1,}' THEN
+										pers_Prenom := tmp3;
+									END IF;
+
+									IF tmp3 ~ '\([a-z]{1,}\)' OR tmp3 ~ '\({0,1}[a-z]{1,}\)' OR tmp3 ~ '\([a-z]{1,}\){0,1}' THEN
+										IF NOT EXISTS(SELECT Designation FROM Metier WHERE Designation=REPLACE(REPLACE(tmp3,'(',''),')','')) THEN
+											INSERT INTO Metier(Designation) VALUES (REPLACE(REPLACE(tmp3,'(',''),')','')) returning id_metier into metier_id;
+										END IF;
+										IF pers_Nom IS NOT NULL THEN
+											IF pers_Prenom IS NOT NULL THEN
+												IF NOT EXISTS(SELECT * FROM Personne WHERE Nom=pers_Nom AND Prenom=pers_Prenom) THEN
+													INSERT INTO Personne(Nom,Prenom) VALUES (pers_Nom,pers_Prenom) returning id_pers into pers_id;
+												END IF;
+											ELSE
+												IF NOT EXISTS(SELECT * FROM Personne WHERE Nom=pers_Nom) THEN
+													INSERT INTO Personne(Nom) VALUES (pers_Nom) returning id_pers into pers_id;
+												END IF;
+											END IF;
+										END IF;
+										IF NOT EXISTS(SELECT * FROM Personne_Metier WHERE id_pers=pers_id AND id_metier = metier_id) THEN
+											INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
+										END IF;
+									END IF;
+
+									IF tmp3 ~ '' THEN
+
+									END IF;
+								END IF;
+							END LOOP;
+					END IF;
+				end if;
+			end loop;
+		END IF;
+	END IF;
+
     --lambert
 	IF NEW.Ville IS NOT NULL THEN
 		IF regexp_split_to_array(new.Ville,', ') IS NOT NULL THEN
