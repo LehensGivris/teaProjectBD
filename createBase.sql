@@ -252,6 +252,7 @@ begin
     	where discriminant = new.Disc) then
     	insert into Discriminant values (new.Disc);
     end if;
+	
     --remarque
     if new.Remarq is not null then
     	if not exists (select * from Remarque
@@ -261,9 +262,11 @@ begin
     	remarque_id := (select id_remarque from Remarque as r where r.remarque = new.Remarq);
     	end if;
     end if;
+
     --photographie
     insert into Photographie(cindoc,serie,article,discriminant,description,notes,id_remarque) values (new.Cindoc,new.Serie,new.Article,new.Disc,new.Descr,new.NoteBasPage,remarque_id) returning id_photo into photo_id;
-    --cindoc
+    
+	--cindoc
 	IF NEW.Cindoc IS NOT NULL THEN
 		IF regexp_split_to_array(new.Cindoc,' \| ') IS NOT NULL THEN
 			foreach tmp in array regexp_split_to_array(new.Cindoc,' \| ')
@@ -279,6 +282,7 @@ begin
 			END LOOP;
 		END IF;
 	END IF;
+
 	--date
 	IF NEW.Date IS NOT NULL THEN
 		SELECT REPLACE(NEW.Date,' | ','/ ') INTO tmp;
@@ -347,9 +351,8 @@ begin
 				end if;
 			end loop;
 		END IF;
-
-		
 	END IF;
+
     --taille
     t := regexp_split_to_array(new.TailleC,', ');
 	IF t IS NOT NULL THEN
@@ -361,6 +364,7 @@ begin
 				end if;
 		end loop;
 	END IF;
+
     --negatif reversible
     neg := regexp_split_to_array(new.NegatReve,', ');
 	IF neg IS NOT NULL THEN
@@ -372,6 +376,7 @@ begin
 				end if;
 		end loop;
 	END IF;
+
     --support
     nb := regexp_split_to_array(new.NbCliche,', ');
     c := regexp_split_to_array(new.Couleur,', ');
@@ -381,6 +386,7 @@ begin
 			insert into Support(id_photo,nbcliche,taille,nr,NoirBlancOrColor) values (photo_id,to_number(nb[i],'9'),t[i],neg[i],c[i]) returning id_support into support_id;
 		end loop;
 	END IF;
+
     --fichier
 	IF NEW.FichierN IS NOT NULL THEN
 		SELECT REPLACE(NEW.FichierN,' | ','/ ') INTO tmp;
@@ -398,6 +404,7 @@ begin
 			end if;
 		end loop;
 	END IF;
+
     --iconographie
 	IF NEW.IndexIco IS NOT NULL THEN
 		SELECT REPLACE(NEW.IndexIco,' | ','/ ') INTO tmp;
@@ -425,6 +432,7 @@ begin
     	end if;
     	insert into Sujet_Photographie values(photo_id,sujet_id);
     end if;
+
     --personne
     
     --lambert
