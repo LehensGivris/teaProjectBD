@@ -2,10 +2,10 @@ SET datestyle TO 'european';
 
 -- Suppression des tables existantes dans le bon ordre
 -- Tables Liens
-DROP TABLE IF EXISTS Photographie_Lieu, Fichier_Photographie, Iconographie_Photographie, Sujet_Photographie, Personne_Photographie, Personne_Metier, Photographie_Date;
+DROP TABLE IF EXISTS Photographie_Lieu, Fichier_Photographie, Iconographie_Photographie, Sujet_Photographie, Personne_Photographie, Personne_Metier, Photographie_Date, Cindoc_Photographie;
 
 -- Tables Basiques
-DROP TABLE IF EXISTS Date, Photographie, NegatifOuReversible, Taille, Support, Lambert93, Fichier, Iconographie, Sujet, Personne, Metier;
+DROP TABLE IF EXISTS Date, Photographie, NegatifOuReversible, Taille, Support, Lambert93, Fichier, Iconographie, Sujet, Personne, Metier, Cindoc;
 
 -- Tables "Clé Etrangère"
 DROP TABLE IF EXISTS Discriminant, Remarque;
@@ -58,6 +58,11 @@ CREATE TABLE Photographie(
 	PRIMARY KEY(id_photo),
 	FOREIGN KEY (discriminant) REFERENCES Discriminant(discriminant),
 	FOREIGN KEY (id_remarque) REFERENCES Remarque(id_remarque)
+);
+
+CREATE TABLE Cindoc(
+	index_cindoc VARCHAR(255),
+	PRIMARY KEY(index_cindoc)
 );
 
 CREATE TABLE Date(
@@ -192,6 +197,14 @@ CREATE TABLE Photographie_Date(
 	FOREIGN KEY (id_photo) REFERENCES Photographie(id_photo)
 );
 
+CREATE TABLE Cindoc_Photographie(
+	index_cindoc VARCHAR(255),
+	id_photo INTEGER,
+	PRIMARY KEY(index_cindoc,id_photo),
+	FOREIGN KEY (index_cindoc) REFERENCES Cindoc(index_cindoc),
+	FOREIGN KEY (id_photo) REFERENCES Photographie(id_photo)
+);
+
 -- Fonctions
 CREATE OR REPLACE FUNCTION array_reverse(anyarray) RETURNS anyarray AS $$
 SELECT ARRAY(
@@ -205,14 +218,17 @@ SELECT ARRAY(
 $$ LANGUAGE 'sql' STRICT IMMUTABLE;
 
 create or replace function date_split(texte text)
-returns table(jour int, mois varchar(255), annee int) as $$
+returns table(jour int, jour_bis int, mois varchar(255), mois_bis varchar(255), annee int, annee_bis int) as $$
 declare
     d text;
     s text;
     flag int;
     a int;
+	a_b int;
     m text;
+	m_b text;
     j int;
+	j_b int;
 begin
 	IF regexp_split_to_array(texte, '/') IS NOT NULL THEN
     foreach d in array regexp_split_to_array(texte, '/')
@@ -250,6 +266,8 @@ declare
     remarque_id int;
     --photographie
     photo_id int;
+	--cindoc
+	indexCindoc text;
     --date
     dcurs cursor for select * from date_split(new.Date);
     d record;
@@ -262,6 +280,8 @@ declare
     support_id int;
     --fichier
     fichier_id int;
+	--iconographie
+
     --sujet
     sujet_id int;
     --personne
@@ -285,7 +305,23 @@ begin
     end if;
     --photographie
     insert into Photographie(cindoc,serie,article,discriminant,description,notes,id_remarque) values (new.Cindoc,new.Serie,new.Article,new.Disc,new.Descr,new.NoteBasPage,remarque_id) returning id_photo into photo_id;
-    --date
+    --cindoc
+	IF NEW.Cindoc IS NOT NULL THEN
+		IF regexp_split_to_array(new.Cindoc,' \| ') IS NOT NULL THEN
+			foreach tmp in array regexp_split_to_array(new.Cindoc,' \| ')
+			LOOP
+				if not exists (select index_cindoc from Cindoc where index_cindoc=tmp) then
+					insert into Cindoc(index_cindoc) values (tmp) returning index_cindoc into indexCindoc;
+				else
+					indexCindoc := (select index_cindoc from Cindoc where index_cindoc=tmp);
+				end if;
+				IF NOT EXISTS(SELECT * FROM Cindoc_Photographie WHERE index_cindoc=indexCindoc AND id_photo=photo_id) THEN
+					insert into Cindoc_Photographie values(indexCindoc,photo_id);
+				END IF;
+			END LOOP;
+		END IF;
+	END IF;
+	--date
     open dcurs;
     loop
         fetch dcurs into d;
@@ -327,38 +363,42 @@ begin
 		end loop;
 	END IF;
     --fichier
-	IF regexp_split_to_array(new.FichierN,' | ') IS NOT NULL THEN
-		foreach tmp in array regexp_split_to_array(new.FichierN,' | ')
-			loop
-				IF tmp IS NOT NULL AND regexp_split_to_array(tmp,'/') IS NOT NULL THEN
-				foreach tmp2 in array regexp_split_to_array(tmp,'/')
-				loop
-					if tmp2 is not null then
-						if not exists (select * from Fichier where NomFichier=new.FichierN) then
-							insert into Fichier(NomFichier) values (tmp2) returning id_fichier into fichier_id;
-						else
-							fichier_id := (select id_fichier from Fichier where NomFichier=new.FichierN);
-						end if;
-						insert into Fichier_Photographie values(photo_id,fichier_id);
-					end if;
-				end loop;
-			END IF;
-		end loop;
+	IF NEW.FichierN IS NOT NULL THEN
+		SELECT REPLACE(NEW.FichierN,' | ','/ ') INTO tmp;
 	END IF;
-    --iconographie
-	IF regexp_split_to_array(new.IndexIco,'/ ') IS NOT NULL THEN
-		foreach tmp in array regexp_split_to_array(new.IndexIco,'/ ')
+	IF tmp IS NOT NULL AND regexp_split_to_array(tmp,'/') IS NOT NULL THEN
+		foreach tmp2 in array regexp_split_to_array(tmp,'/')
 		loop
-			if tmp is not null then
-				if not exists (select index_icono from Iconographie where index_icono=tmp) then
-					insert into Iconographie values (tmp);
+			if tmp2 is not null then
+				if not exists (select * from Fichier where NomFichier=new.FichierN) then
+					insert into Fichier(NomFichier) values (tmp2) returning id_fichier into fichier_id;
+				else
+					fichier_id := (select id_fichier from Fichier where NomFichier=new.FichierN);
 				end if;
-				insert into Iconographie_Photographie values(photo_id,tmp);
+				insert into Fichier_Photographie values(photo_id,fichier_id);
 			end if;
 		end loop;
 	END IF;
+    --iconographie
+	IF NEW.IndexIco IS NOT NULL THEN
+		SELECT REPLACE(NEW.IndexIco,' | ','/ ') INTO tmp;
+	END IF;
+	IF regexp_split_to_array(tmp,'/ ') IS NOT NULL THEN
+		foreach tmp2 in array regexp_split_to_array(tmp,'/ ')
+		loop
+			if tmp2 is not null then
+				if not exists (select index_icono from Iconographie where index_icono=tmp2) then
+					insert into Iconographie values (tmp2);
+				end if;
+				IF NOT EXISTS (SELECT index_icono FROM Iconographie_Photographie WHERE index_icono = tmp2) THEN
+					insert into Iconographie_Photographie values(photo_id,tmp2);
+				END IF;
+			end if;
+		end loop;
+	END IF;
+	
     --sujet
-    if new.Sujet is not null then
+    if tmp is not null then
     	if not exists (select * from Sujet where sujet=tmp) then
     		insert into Sujet(sujet) values (tmp) returning id_sujet into sujet_id;
     	else
