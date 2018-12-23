@@ -281,63 +281,74 @@ begin
 	END IF;
 	--date
 	IF NEW.Date IS NOT NULL THEN
-		SELECT regexp_split_to_array(ltrim(NEW.Date,'Prise de vue: '),' ') INTO date_cache;
+		SELECT REPLACE(NEW.Date,' | ','/ ') INTO tmp;
+		
+		IF tmp IS NOT NULL AND regexp_split_to_array(tmp,'/') IS NOT NULL THEN
+			foreach tmp2 in array regexp_split_to_array(tmp,'/')
+			loop
+				if tmp2 is not null then
+					SELECT regexp_split_to_array(ltrim(tmp2,'Prise de vue: '),' ') INTO date_cache;
 
-		CASE
-			WHEN cardinality(date_cache) = 3 THEN
-				IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
-					date_j := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[1];
-					date_j_b := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[2];
-				ELSE
-					date_j := (to_number(date_cache[1],'9999'));
-				END IF;
+					CASE
+						WHEN cardinality(date_cache) = 3 THEN
+							IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
+								date_j := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[1];
+								date_j_b := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[2];
+							ELSE
+								date_j := (to_number(date_cache[1],'9999'));
+							END IF;
 
-				IF cardinality(regexp_split_to_array(date_cache[2],'-')) = 2 THEN
-					date_m := (regexp_split_to_array(date_cache[2],'-'))[1];
-					date_m_b := (regexp_split_to_array(date_cache[2],'-'))[2];
-				ELSE
-					date_m := (date_cache[2]);
-				END IF;
+							IF cardinality(regexp_split_to_array(date_cache[2],'-')) = 2 THEN
+								date_m := (regexp_split_to_array(date_cache[2],'-'))[1];
+								date_m_b := (regexp_split_to_array(date_cache[2],'-'))[2];
+							ELSE
+								date_m := (date_cache[2]);
+							END IF;
 
-				IF cardinality(regexp_split_to_array(date_cache[3],'-')) = 2 THEN
-					date_a := (to_number(regexp_split_to_array(date_cache[3],'-'),'9999'))[1];
-					date_a_b := (to_number(regexp_split_to_array(date_cache[3],'-'),'9999'))[2];
-				ELSE
-					date_a := (to_number(date_cache[3],'9999'));
-				END IF;
-			WHEN cardinality(date_cache) = 2 THEN
-				IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
-					date_m := (regexp_split_to_array(date_cache[1],'-'))[1];
-					date_m_b := (regexp_split_to_array(date_cache[1],'-'))[2];
-				ELSE
-					date_m := (date_cache[1]);
-				END IF;
+							IF cardinality(regexp_split_to_array(date_cache[3],'-')) = 2 THEN
+								date_a := (to_number(regexp_split_to_array(date_cache[3],'-'),'9999'))[1];
+								date_a_b := (to_number(regexp_split_to_array(date_cache[3],'-'),'9999'))[2];
+							ELSE
+								date_a := (to_number(date_cache[3],'9999'));
+							END IF;
+						WHEN cardinality(date_cache) = 2 THEN
+							IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
+								date_m := (regexp_split_to_array(date_cache[1],'-'))[1];
+								date_m_b := (regexp_split_to_array(date_cache[1],'-'))[2];
+							ELSE
+								date_m := (date_cache[1]);
+							END IF;
 
-				IF cardinality(regexp_split_to_array(date_cache[2],'-')) = 2 THEN
-					date_a := (to_number(regexp_split_to_array(date_cache[2],'-'),'9999'))[1];
-					date_a_b := (to_number(regexp_split_to_array(date_cache[2],'-'),'9999'))[2];
-				ELSE
-					date_a := (to_number(date_cache[2],'9999'));
-				END IF;
-			WHEN cardinality(date_cache) = 1 THEN
-				IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
-					date_a := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[1];
-					date_a_b := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[2];
-				ELSE
-					date_a := (to_number(date_cache[1],'9999'));
-				END IF;
-			ELSE
-				date_a := NULL;
-		END CASE;
+							IF cardinality(regexp_split_to_array(date_cache[2],'-')) = 2 THEN
+								date_a := (to_number(regexp_split_to_array(date_cache[2],'-'),'9999'))[1];
+								date_a_b := (to_number(regexp_split_to_array(date_cache[2],'-'),'9999'))[2];
+							ELSE
+								date_a := (to_number(date_cache[2],'9999'));
+							END IF;
+						WHEN cardinality(date_cache) = 1 THEN
+							IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
+								date_a := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[1];
+								date_a_b := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[2];
+							ELSE
+								date_a := (to_number(date_cache[1],'9999'));
+							END IF;
+						ELSE
+							date_a := NULL;
+					END CASE;
 
-		IF NOT EXISTS(SELECT * FROM DATE WHERE jour = date_j AND mois = date_m AND annee = date_a AND jour_bis = date_j_b AND mois_bis = date_m_b AND annee_bis = date_a_b) THEN
-			INSERT INTO DATE(jour,jour_bis,mois,mois_bis,annee,annee_bis) VALUES(date_j,date_j_b,date_m,date_m_b,date_a,date_a_b) returning id_date into date_id;
-			INSERT INTO Photographie_Date(id_photo,id_date) VALUES (photo_id,date_id);
-		ELSE
-			IF NOT EXISTS(SELECT * FROM Photographie_Date WHERE id_date = date_id AND photo_id = id_photo) THEN
-				INSERT INTO Photographie_Date(id_photo,id_date) VALUES (photo_id,date_id);
-			END IF;
+					IF NOT EXISTS(SELECT * FROM DATE WHERE jour = date_j AND mois = date_m AND annee = date_a AND jour_bis = date_j_b AND mois_bis = date_m_b AND annee_bis = date_a_b) THEN
+						INSERT INTO DATE(jour,jour_bis,mois,mois_bis,annee,annee_bis) VALUES(date_j,date_j_b,date_m,date_m_b,date_a,date_a_b) returning id_date into date_id;
+						INSERT INTO Photographie_Date(id_photo,id_date) VALUES (photo_id,date_id);
+					ELSE
+						IF NOT EXISTS(SELECT * FROM Photographie_Date WHERE id_date = date_id AND photo_id = id_photo) THEN
+							INSERT INTO Photographie_Date(id_photo,id_date) VALUES (photo_id,date_id);
+						END IF;
+					END IF;
+				end if;
+			end loop;
 		END IF;
+
+		
 	END IF;
     --taille
     t := regexp_split_to_array(new.TailleC,', ');
