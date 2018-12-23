@@ -214,26 +214,30 @@ declare
     m text;
     j int;
 begin
+	IF regexp_split_to_array(texte, '/') IS NOT NULL THEN
     foreach d in array regexp_split_to_array(texte, '/')
-    loop
-        flag :=0;
-        foreach s in array array_reverse(regexp_split_to_array(ltrim(d,'Prise de vue : '),' '))
-        loop
-            case
-                when flag = 0 then
-                    a := to_number(s,'9999');
-                when flag = 1 then
-                    m := s;
-                when flag = 2 then
-                    j := to_number(s,'99'); 
-            end case;
-            flag := flag+1;
-        end loop;
-        jour := j;
-        mois := m;
-        annee := a;
-        return next;
-    end loop;
+		loop
+			flag :=0;
+			IF array_reverse(regexp_split_to_array(ltrim(d,'Prise de vue : '),' ')) IS NOT NULL THEN
+			foreach s in array array_reverse(regexp_split_to_array(ltrim(d,'Prise de vue : '),' '))
+			loop
+				case
+					when flag = 0 then
+						a := to_number(s,'9999');
+					when flag = 1 then
+						m := s;
+					when flag = 2 then
+						j := to_number(s,'99'); 
+				end case;
+				flag := flag+1;
+			end loop;
+			jour := j;
+			mois := m;
+			annee := a;
+			return next;
+			END IF;
+		end loop;
+	END IF;
 end;
 $$ language plpgsql;
 
@@ -293,55 +297,66 @@ begin
     close dcurs;
     --taille
     t := regexp_split_to_array(new.TailleC,', ');
-    foreach tmp in array t
-    loop
-        if tmp is not null and not exists (select * from Taille
-        	where taille = tmp) then
-        		insert into Taille(taille) values (tmp);
-        	end if;
-    end loop;
+	IF t IS NOT NULL THEN
+		foreach tmp in array t
+		loop
+			if tmp is not null and not exists (select * from Taille
+				where taille = tmp) then
+					insert into Taille(taille) values (tmp);
+				end if;
+		end loop;
+	END IF;
     --negatif reversible
     neg := regexp_split_to_array(new.NegatReve,', ');
-    foreach tmp in array neg
-    loop
-        if tmp is not null and not exists (select * from NegatifOuReversible
-        	where nr = tmp) then
-        		insert into NegatifOuReversible(nr) values (tmp);
-        	end if;
-    end loop;
+	IF neg IS NOT NULL THEN
+		foreach tmp in array neg
+		loop
+			if tmp is not null and not exists (select * from NegatifOuReversible
+				where nr = tmp) then
+					insert into NegatifOuReversible(nr) values (tmp);
+				end if;
+		end loop;
+	END IF;
     --support
     nb := regexp_split_to_array(new.NbCliche,', ');
     c := regexp_split_to_array(new.Couleur,', ');
-    for i in 1..array_length(nb,1)
-    loop
-        insert into Support(id_photo,nbcliche,taille,nr,NoirBlancOrColor) values (photo_id,to_number(nb[i],'9'),t[i],neg[i],c[i]) returning id_support into support_id;
-        --insert into Support_Photographie values (photo_id,support_id);
-    end loop;
+	IF nb IS NOT NULL AND c IS NOT NULL THEN
+		for i in 1..array_length(nb,1)
+		loop
+			insert into Support(id_photo,nbcliche,taille,nr,NoirBlancOrColor) values (photo_id,to_number(nb[i],'9'),t[i],neg[i],c[i]) returning id_support into support_id;
+		end loop;
+	END IF;
     --fichier
-    foreach tmp in array regexp_split_to_array(new.FichierN,' | ')
-    loop
-        foreach tmp2 in array regexp_split_to_array(tmp,'/')
-        loop
-            if tmp2 is not null then
-            	if not exists (select * from Fichier where NomFichier=new.FichierN) then
-            		insert into Fichier(NomFichier) values (tmp2) returning id_fichier into fichier_id;
-           		else
-            		fichier_id := (select id_fichier from Fichier where NomFichier=new.FichierN);
-            	end if;
-            	insert into Fichier_Photographie values(photo_id,fichier_id);
-            end if;
-        end loop;
-    end loop;
+	IF regexp_split_to_array(new.FichierN,' | ') IS NOT NULL THEN
+		foreach tmp in array regexp_split_to_array(new.FichierN,' | ')
+			loop
+				IF tmp IS NOT NULL AND regexp_split_to_array(tmp,'/') IS NOT NULL THEN
+				foreach tmp2 in array regexp_split_to_array(tmp,'/')
+				loop
+					if tmp2 is not null then
+						if not exists (select * from Fichier where NomFichier=new.FichierN) then
+							insert into Fichier(NomFichier) values (tmp2) returning id_fichier into fichier_id;
+						else
+							fichier_id := (select id_fichier from Fichier where NomFichier=new.FichierN);
+						end if;
+						insert into Fichier_Photographie values(photo_id,fichier_id);
+					end if;
+				end loop;
+			END IF;
+		end loop;
+	END IF;
     --iconographie
-    foreach tmp in array regexp_split_to_array(new.IndexIco,'/ ')
-    loop
-        if tmp is not null then
-        	if not exists (select * from Iconographie where New.IndexIco=tmp) then
-        		insert into Iconographie values (tmp);
-        	end if;
-        	insert into Iconographie_Photographie values(photo_id,New.IndexIco);
-        end if;
-    end loop;
+	IF regexp_split_to_array(new.IndexIco,'/ ') IS NOT NULL THEN
+		foreach tmp in array regexp_split_to_array(new.IndexIco,'/ ')
+		loop
+			if tmp is not null then
+				if not exists (select index_icono from Iconographie where index_icono=tmp) then
+					insert into Iconographie values (tmp);
+				end if;
+				insert into Iconographie_Photographie values(photo_id,tmp);
+			end if;
+		end loop;
+	END IF;
     --sujet
     if new.Sujet is not null then
     	if not exists (select * from Sujet where sujet=tmp) then
@@ -354,6 +369,7 @@ begin
     --personne
     
     --lambert
+	/*
     IF NEW.Ville IS NOT NULL THEN
 		IF NOT EXISTS (SELECT nom FROM Lambert93 WHERE nom=NEW.Ville) THEN
 			INSERT INTO Lambert93(ref_lieux,codeInsee,codePostal,nom,CoordX,CoordY) VALUES ((SELECT MAX(ref_lieux)+1 FROM Lambert93),-1,0,NEW.Ville,0,0) returning ref_lieux INTO lamb_id;
@@ -362,12 +378,15 @@ begin
 		END IF;
 		INSERT INTO Photographie_Lieu VALUES(photo_id,lamb_id);
 	END IF;
+	*/
     return new;
 end;
 $$ language plpgsql;
 
+DROP TRIGGER IF EXISTS insert_data ON DataImported;
+
 create trigger insert_data
-after insert on DataImported
+BEFORE insert on DataImported
 for each row
 execute procedure insert_tout();
 
