@@ -206,57 +206,6 @@ CREATE TABLE Cindoc_Photographie(
 );
 
 -- Fonctions
-CREATE OR REPLACE FUNCTION array_reverse(anyarray) RETURNS anyarray AS $$
-SELECT ARRAY(
-    SELECT $1[i]
-    FROM generate_series(
-        array_lower($1,1),
-        array_upper($1,1)
-    ) AS s(i)
-    ORDER BY i DESC
-);
-$$ LANGUAGE 'sql' STRICT IMMUTABLE;
-
-create or replace function date_split(texte text)
-returns table(jour int, jour_bis int, mois varchar(255), mois_bis varchar(255), annee int, annee_bis int) as $$
-declare
-    d text;
-    s text;
-    flag int;
-    a int;
-	a_b int;
-    m text;
-	m_b text;
-    j int;
-	j_b int;
-begin
-	IF regexp_split_to_array(texte, '/') IS NOT NULL THEN
-    foreach d in array regexp_split_to_array(texte, '/')
-		loop
-			flag :=0;
-			IF array_reverse(regexp_split_to_array(ltrim(d,'Prise de vue : '),' ')) IS NOT NULL THEN
-			foreach s in array array_reverse(regexp_split_to_array(ltrim(d,'Prise de vue : '),' '))
-			loop
-				case
-					when flag = 0 then
-						a := to_number(s,'9999');
-					when flag = 1 then
-						m := s;
-					when flag = 2 then
-						j := to_number(s,'99'); 
-				end case;
-				flag := flag+1;
-			end loop;
-			jour := j;
-			mois := m;
-			annee := a;
-			return next;
-			END IF;
-		end loop;
-	END IF;
-end;
-$$ language plpgsql;
-
 create or replace function insert_tout()
 returns trigger as $$
 declare
@@ -271,7 +220,15 @@ declare
     --date
     dcurs cursor for select * from date_split(new.Date);
     d record;
+
     date_id int;
+	date_j int;
+	date_j_b int;
+	date_m text;
+	date_m_b text;
+	date_a int;
+	date_a_b int;
+	date_cache text[];
     --support
     t text[];
     neg text[];
@@ -288,6 +245,7 @@ declare
     
     --lambert
     lamb_id int;
+	maxId int;
 begin
     --discriminant
     if new.Disc is not null and not exists (select * from Discriminant
@@ -322,15 +280,65 @@ begin
 		END IF;
 	END IF;
 	--date
-    open dcurs;
-    loop
-        fetch dcurs into d;
-        if not found then exit;
-        end if;
-        insert into Date(jour, mois, annee) values (d.jour, d.mois, d.annee) returning id_date into date_id;
-        insert into Photographie_Date values (photo_id, date_id);
-    end loop;
-    close dcurs;
+	IF NEW.Date IS NOT NULL THEN
+		SELECT regexp_split_to_array(ltrim(NEW.Date,'Prise de vue: '),' ') INTO date_cache;
+
+		CASE
+			WHEN cardinality(date_cache) = 3 THEN
+				IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
+					date_j := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[1];
+					date_j_b := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[2];
+				ELSE
+					date_j := (to_number(date_cache[1],'9999'));
+				END IF;
+
+				IF cardinality(regexp_split_to_array(date_cache[2],'-')) = 2 THEN
+					date_m := (regexp_split_to_array(date_cache[2],'-'))[1];
+					date_m_b := (regexp_split_to_array(date_cache[2],'-'))[2];
+				ELSE
+					date_m := (date_cache[2]);
+				END IF;
+
+				IF cardinality(regexp_split_to_array(date_cache[3],'-')) = 2 THEN
+					date_a := (to_number(regexp_split_to_array(date_cache[3],'-'),'9999'))[1];
+					date_a_b := (to_number(regexp_split_to_array(date_cache[3],'-'),'9999'))[2];
+				ELSE
+					date_a := (to_number(date_cache[3],'9999'));
+				END IF;
+			WHEN cardinality(date_cache) = 2 THEN
+				IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
+					date_m := (regexp_split_to_array(date_cache[1],'-'))[1];
+					date_m_b := (regexp_split_to_array(date_cache[1],'-'))[2];
+				ELSE
+					date_m := (date_cache[1]);
+				END IF;
+
+				IF cardinality(regexp_split_to_array(date_cache[2],'-')) = 2 THEN
+					date_a := (to_number(regexp_split_to_array(date_cache[2],'-'),'9999'))[1];
+					date_a_b := (to_number(regexp_split_to_array(date_cache[2],'-'),'9999'))[2];
+				ELSE
+					date_a := (to_number(date_cache[2],'9999'));
+				END IF;
+			WHEN cardinality(date_cache) = 1 THEN
+				IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
+					date_a := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[1];
+					date_a_b := (to_number(regexp_split_to_array(date_cache[1],'-'),'9999'))[2];
+				ELSE
+					date_a := (to_number(date_cache[1],'9999'));
+				END IF;
+			ELSE
+				date_a := NULL;
+		END CASE;
+
+		IF NOT EXISTS(SELECT * FROM DATE WHERE jour = date_j AND mois = date_m AND annee = date_a AND jour_bis = date_j_b AND mois_bis = date_m_b AND annee_bis = date_a_b) THEN
+			INSERT INTO DATE(jour,jour_bis,mois,mois_bis,annee,annee_bis) VALUES(date_j,date_j_b,date_m,date_m_b,date_a,date_a_b) returning id_date into date_id;
+			INSERT INTO Photographie_Date(id_photo,id_date) VALUES (photo_id,date_id);
+		ELSE
+			IF NOT EXISTS(SELECT * FROM Photographie_Date WHERE id_date = date_id AND photo_id = id_photo) THEN
+				INSERT INTO Photographie_Date(id_photo,id_date) VALUES (photo_id,date_id);
+			END IF;
+		END IF;
+	END IF;
     --taille
     t := regexp_split_to_array(new.TailleC,', ');
 	IF t IS NOT NULL THEN
@@ -373,7 +381,7 @@ begin
 				if not exists (select * from Fichier where NomFichier=new.FichierN) then
 					insert into Fichier(NomFichier) values (tmp2) returning id_fichier into fichier_id;
 				else
-					fichier_id := (select id_fichier from Fichier where NomFichier=new.FichierN);
+					fichier_id := (select MIN(id_fichier) from Fichier where NomFichier=new.FichierN);
 				end if;
 				insert into Fichier_Photographie values(photo_id,fichier_id);
 			end if;
@@ -409,16 +417,21 @@ begin
     --personne
     
     --lambert
-	/*
-    IF NEW.Ville IS NOT NULL THEN
-		IF NOT EXISTS (SELECT nom FROM Lambert93 WHERE nom=NEW.Ville) THEN
-			INSERT INTO Lambert93(ref_lieux,codeInsee,codePostal,nom,CoordX,CoordY) VALUES ((SELECT MAX(ref_lieux)+1 FROM Lambert93),-1,0,NEW.Ville,0,0) returning ref_lieux INTO lamb_id;
-		ELSE
-			lamb_id := (SELECT ref_lieux FROM Lambert93 WHERE nom=NEW.Ville);
+	IF NEW.Ville IS NOT NULL THEN
+		IF regexp_split_to_array(new.Ville,', ') IS NOT NULL THEN
+			foreach tmp in array regexp_split_to_array(new.Ville,', ')
+			LOOP
+				if exists (select nom from Lambert93 where nom=tmp) then
+					lamb_id := (select MIN(ref_lieux) from Lambert93 where nom=tmp AND codePostal>0);
+					IF lamb_id IS NOT NULL THEN
+						IF NOT EXISTS(SELECT * FROM Photographie_Lieu WHERE id_lambert=lamb_id AND id_photo=photo_id) THEN
+							insert into Photographie_Lieu values(photo_id,lamb_id);
+						END IF;
+					END IF;
+				end if;
+			END LOOP;
 		END IF;
-		INSERT INTO Photographie_Lieu VALUES(photo_id,lamb_id);
 	END IF;
-	*/
     return new;
 end;
 $$ language plpgsql;
