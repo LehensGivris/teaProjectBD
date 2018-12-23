@@ -284,7 +284,7 @@ begin
     	end if;
     end if;
     --photographie
-    insert into Photographie(cindoc,serie,article,discriminant,description,notes,id_remarque) values (new.Cindoc,new.Serie,new.Article/*to_number(new.Article,'999999')*/,new.Disc,new.Descr,new.NoteBasPage,remarque_id) returning id_photo into photo_id;
+    insert into Photographie(cindoc,serie,article,discriminant,description,notes,id_remarque) values (new.Cindoc,new.Serie,new.Article,new.Disc,new.Descr,new.NoteBasPage,remarque_id) returning id_photo into photo_id;
     --date
     open dcurs;
     loop
