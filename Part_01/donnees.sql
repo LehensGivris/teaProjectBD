@@ -471,7 +471,10 @@ begin
 					IF pers_desig IS NULL THEN
 						pers_desig := '';
 					END IF;
-					pers_note := (SELECT TRIM(SUBSTRING(tmp2,'(voir aussi).+')),'(voir aussi).+');
+					pers_note := (SELECT TRIM(SUBSTRING(tmp2,'(voir aussi).+')),'voir aussi');
+					IF pers_note IS NULL THEN
+						pers_note := '';
+					END IF;
 
 
 				END IF;
@@ -578,8 +581,8 @@ for each row
 execute procedure insert_tout();
 
 -- Insertion des données Lambert93 (Site originaire des données : http://www.pillot.fr/cartographe/index.php)
-COPY Lambert93 FROM 'C:\Users\Louis LE LANN\Documents\GitHub\teaProjectBD\villes.csv' DELIMITER ',' CSV HEADER ENCODING 'ISO-8859-15';
+COPY Lambert93 FROM 'C:\Users\louis\Documents\GitHub\teaProjectBD\Part_01\villes.csv' DELIMITER ',' CSV HEADER ENCODING 'ISO-8859-15';
 
 -- Insertion des données dans la table de transfert et séparation dans les bonnes tables
-COPY DataImported FROM 'C:\Users\Louis LE LANN\Documents\GitHub\teaProjectBD\Part_01\data.csv' DELIMITER '	' CSV HEADER;
+COPY DataImported FROM 'C:\Users\louis\Documents\GitHub\teaProjectBD\Part_01\data.csv' DELIMITER '	' CSV HEADER;
 
