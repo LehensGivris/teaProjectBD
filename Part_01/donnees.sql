@@ -457,24 +457,46 @@ begin
 					pers_job := (SELECT SUBSTRING(tmp2,'\(.*.\)'));
 					IF pers_job IS NULL THEN
 						pers_job := '';
-						pers_Prenom := (SELECT SUBSTRING(TRIM(TRIM(tmp2,pers_Nom),pers_job),'[A-Z]{1}[a-z]{1,}'));
+					END IF;
+					pers_Prenom := (SELECT SUBSTRING(TRIM(TRIM(tmp2,pers_Nom),pers_job),'[A-Z]{1}[a-z]{1,}'));
 					IF pers_Prenom IS NULL THEN:
 						pers_Prenom := '';
-					pers_design := (SELECT SUBSTRING(TRIM(TRIM(TRIM(tmp2,pers_Nom),pers_job),pers_Prenom),'[a-z]{1,}'));
-					IF pers_design IS NULL THEN:
-						pers_design := '';
+					END IF;
+					pers_desig := (SELECT SUBSTRING(TRIM(TRIM(TRIM(tmp2,pers_Nom),pers_job),pers_Prenom),'[a-z]{1,}'));
+					IF pers_desig IS NULL THEN:
+						pers_desig := '';
+					END IF;
 					pers_note := (SELECT TRIM(SUBSTRING(tmp2,'(voir aussi).+')),'(voir aussi).+');
-					
 
 
+				END IF;
 				IF pers_Nom IS NULL AND pers_Prenom IS NULL AND pers_job IS NULL AND pers_desig IS NULL THEN
 					pers_note := tmp2
 					INSERT INTO Personne(Notes) VALUES (pers_note) returning id_pers into pers_id;
+				ELSE
+					INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
 
+					IF pers_job IS NOT NULL THEN
+						pers_job = (SELECT TRIM(TRIM(pers_job,'\('),'\)'));
+						pers_job = regexp_split_to_array(pers_job,',');
+						FOR EACH tmp3 IN ARRAY pers_job
+						LOOP
+							
+						END LOOP
+
+
+					END IF;
+
+
+
+
+
+				END IF;
 				
 			END LOOP
-
-
+		END IF;
+	END IF;
+/*
     IF NEW.IndexP IS NOT NULL THEN
 		IF regexp_split_to_array(NEW.IndexP,'/ ') IS NOT NULL THEN
 			foreach tmp2 in array regexp_split_to_array(NEW.IndexP,'/ ')
@@ -526,7 +548,7 @@ begin
 			end loop;
 		END IF;
 	END IF;
-
+*/
     --lambert
 	IF NEW.Ville IS NOT NULL THEN
 		IF regexp_split_to_array(new.Ville,', ') IS NOT NULL THEN
