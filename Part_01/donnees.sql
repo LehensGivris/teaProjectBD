@@ -451,10 +451,10 @@ begin
 
     --personne and metier
 	IF NEW.IndexP IS NOT NULL THEN
-		SELECT REPLACE(NEW.IndexIco,' | ','/ ') INTO tmp;
-		tmp4 = regexp_split_to_array(tmp,'/ ');
-		IF tmp4 IS NOT NULL THEN
-			FOREACH tmp2 IN ARRAY tmp4
+		SELECT REPLACE(NEW.IndexIco,' | ','/') INTO tmp;
+		tmp := regexp_split_to_array(tmp,'/');
+		IF tmp2 IS NOT NULL THEN
+			FOREACH tmp2 IN ARRAY tmp
 			LOOP
 				pers_Nom := (SELECT SUBSTRING(tmp2,'[A-Z]{1,}.[A-Z|A-Z ]{1,}.(?![, ]).(?![a-z]{1,})'));
 				IF pers_Nom IS NULL THEN
@@ -471,13 +471,14 @@ begin
 					IF pers_desig IS NULL THEN
 						pers_desig := '';
 					END IF;
-					pers_note := (SELECT /*TRIM(*/SUBSTRING(tmp2,'(voir aussi).+'))/*),'voir aussi')*/;
+					pers_note := tmp2;--(SELECT SUBSTRING(tmp2,'voir aussi%'),'voir aussi');
 					IF pers_note IS NULL THEN
 						pers_note := '';
 					END IF;
 
 
 				END IF;
+				/*
 				IF pers_Nom IS NULL AND pers_Prenom IS NULL AND pers_job IS NULL AND pers_desig IS NULL THEN
 					pers_note := tmp2;
 					INSERT INTO Personne(Notes) VALUES (pers_note) returning id_pers into pers_id;
@@ -496,10 +497,12 @@ begin
 							END IF;
 						END LOOP;
 					END IF;
-				END IF;				
+				END IF;
+				*/				
 			END LOOP;
 		END IF;
 	END IF;
+--Old Méthode Personne/Métier (Ne Fonctionne pas correctement)
 /*
     IF NEW.IndexP IS NOT NULL THEN
 		IF regexp_split_to_array(NEW.IndexP,'/ ') IS NOT NULL THEN
