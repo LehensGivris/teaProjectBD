@@ -453,13 +453,25 @@ begin
 			LOOP
 				pers_Nom := (SELECT SUBSTRING(tmp2,'[A-Z]{1,}.[A-Z|A-Z ]{1,}.(?![, ]).(?![a-z]{1,})'));
 				IF pers_Nom IS NULL THEN
-					pers_Nom := ''
-				pers_job := (SELECT SUBSTRING(tmp2,'\(.*.\)'));
-				IF pers_job IS NULL THEN
-					pers_job := ''
-				pers_Prenom := (SELECT SUBSTRING(SELECT TRIM(TRIM(tmp2,pers_Nom),pers_job),'[A-Z]{1}[a-z]{1,}'));
-				pers_desig :=;
-				pers_note :=;
+					pers_Nom := '';
+					pers_job := (SELECT SUBSTRING(tmp2,'\(.*.\)'));
+					IF pers_job IS NULL THEN
+						pers_job := '';
+						pers_Prenom := (SELECT SUBSTRING(TRIM(TRIM(tmp2,pers_Nom),pers_job),'[A-Z]{1}[a-z]{1,}'));
+					IF pers_Prenom IS NULL THEN:
+						pers_Prenom := '';
+					pers_design := (SELECT SUBSTRING(TRIM(TRIM(TRIM(tmp2,pers_Nom),pers_job),pers_Prenom),'[a-z]{1,}'));
+					IF pers_design IS NULL THEN:
+						pers_design := '';
+					pers_note := (SELECT TRIM(SUBSTRING(tmp2,'(voir aussi).+')),'(voir aussi).+');
+					
+
+
+				IF pers_Nom IS NULL AND pers_Prenom IS NULL AND pers_job IS NULL AND pers_desig IS NULL THEN
+					pers_note := tmp2
+					INSERT INTO Personne(Notes) VALUES (pers_note) returning id_pers into pers_id;
+
+				
 			END LOOP
 
 
