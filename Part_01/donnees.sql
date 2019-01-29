@@ -217,6 +217,8 @@ declare
 	tmp4 text[];
 	tmp5 text[];
 
+	tmpI int;
+
     --remarque
     remarque_id int;
     --photographie
@@ -452,9 +454,9 @@ begin
     --personne and metier
 	IF NEW.IndexP IS NOT NULL THEN
 		SELECT REPLACE(NEW.IndexIco,' | ','/') INTO tmp;
-		tmp := regexp_split_to_array(tmp,'/');
+		tmp4 := regexp_split_to_array(tmp,'/');
 		IF tmp2 IS NOT NULL THEN
-			FOREACH tmp2 IN ARRAY tmp
+			FOREACH tmp2 IN ARRAY tmp4
 			LOOP
 				pers_Nom := (SELECT SUBSTRING(tmp2,'[A-Z]{1,}.[A-Z|A-Z ]{1,}.(?![, ]).(?![a-z]{1,})'));
 				IF pers_Nom IS NULL THEN
@@ -487,15 +489,28 @@ begin
 
 					IF pers_job IS NOT NULL THEN
 						pers_job := (SELECT TRIM(TRIM(pers_job,'\('),'\)'));
-						pers_job := regexp_split_to_array(pers_job,',');
-						FOREACH tmp3 IN ARRAY pers_job
-						LOOP
-							metier_desig := tmp3;
+
+						tmpI := (select array_length(string_to_array(pers_job, ','), 1) - 1);
+						
+						IF tmpI IS NOT NULL AND tmpI>0 THEN
+							
+							tmp5 := regexp_split_to_array(pers_job,',');
+							FOREACH tmp3 IN ARRAY tmp5
+							LOOP
+								metier_desig := tmp3;
+								IF metier_desig IS NOT NULL THEN
+									INSERT INTO Metier(Designation) VALUES (metier_desig) returning id_metier into metier_id;
+									INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
+								END IF;
+							END LOOP;
+							
+							tmpI := 1;
+						ELSE
 							IF metier_desig IS NOT NULL THEN
 								INSERT INTO Metier(Designation) VALUES (metier_desig) returning id_metier into metier_id;
 								INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
 							END IF;
-						END LOOP;
+						END IF;						
 					END IF;
 				END IF;			
 			END LOOP;
