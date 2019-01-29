@@ -471,7 +471,7 @@ begin
 					IF pers_desig IS NULL THEN
 						pers_desig := '';
 					END IF;
-					pers_note := (SELECT TRIM(SUBSTRING(tmp2,'(voir aussi).+')),'voir aussi');
+					pers_note := (SELECT /*TRIM(*/SUBSTRING(tmp2,'(voir aussi).+'))/*),'voir aussi')*/;
 					IF pers_note IS NULL THEN
 						pers_note := '';
 					END IF;
