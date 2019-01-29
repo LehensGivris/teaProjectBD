@@ -209,9 +209,14 @@ CREATE TABLE Cindoc_Photographie(
 create or replace function insert_tout()
 returns trigger as $$
 declare
+	--Temporaire
     tmp text;
     tmp2 text;
 	tmp3 text;
+
+	tmp4 text[];
+	tmp5 text[];
+
     --remarque
     remarque_id int;
     --photographie
@@ -447,7 +452,7 @@ begin
     --personne and metier
 	IF NEW.IndexP IS NOT NULL THEN
 		SELECT REPLACE(NEW.IndexIco,' | ','/ ') INTO tmp;
-		tmp = regexp_split_to_array(tmp,'/ ')
+		tmp = regexp_split_to_array(tmp,'/ ');
 		IF tmp IS NOT NULL THEN
 			FOR EACH tmp2 IN ARRAY tmp
 			LOOP
