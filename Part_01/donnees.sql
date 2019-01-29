@@ -252,7 +252,7 @@ declare
 
 	--metier
 	metier_id int;
-	metier_desig
+	metier_desig text;
 
     --lambert
     lamb_id int;
