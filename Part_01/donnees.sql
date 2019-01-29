@@ -452,9 +452,9 @@ begin
     --personne and metier
 	IF NEW.IndexP IS NOT NULL THEN
 		SELECT REPLACE(NEW.IndexIco,' | ','/ ') INTO tmp;
-		tmp = regexp_split_to_array(tmp,'/ ');
-		IF tmp IS NOT NULL THEN
-			FOR EACH tmp2 IN ARRAY tmp
+		tmp4 = regexp_split_to_array(tmp,'/ ');
+		IF tmp4 IS NOT NULL THEN
+			FOREACH tmp2 IN ARRAY tmp4
 			LOOP
 				pers_Nom := (SELECT SUBSTRING(tmp2,'[A-Z]{1,}.[A-Z|A-Z ]{1,}.(?![, ]).(?![a-z]{1,})'));
 				IF pers_Nom IS NULL THEN
@@ -464,11 +464,11 @@ begin
 						pers_job := '';
 					END IF;
 					pers_Prenom := (SELECT SUBSTRING(TRIM(TRIM(tmp2,pers_Nom),pers_job),'[A-Z]{1}[a-z]{1,}'));
-					IF pers_Prenom IS NULL THEN:
+					IF pers_Prenom IS NULL THEN
 						pers_Prenom := '';
 					END IF;
 					pers_desig := (SELECT SUBSTRING(TRIM(TRIM(TRIM(tmp2,pers_Nom),pers_job),pers_Prenom),'[a-z]{1,}'));
-					IF pers_desig IS NULL THEN:
+					IF pers_desig IS NULL THEN
 						pers_desig := '';
 					END IF;
 					pers_note := (SELECT TRIM(SUBSTRING(tmp2,'(voir aussi).+')),'(voir aussi).+');
@@ -484,7 +484,7 @@ begin
 					IF pers_job IS NOT NULL THEN
 						pers_job := (SELECT TRIM(TRIM(pers_job,'\('),'\)'));
 						pers_job := regexp_split_to_array(pers_job,',');
-						FOR EACH tmp3 IN ARRAY pers_job
+						FOREACH tmp3 IN ARRAY pers_job
 						LOOP
 							metier_desig := tmp3;
 							IF metier_desig IS NOT NULL THEN
