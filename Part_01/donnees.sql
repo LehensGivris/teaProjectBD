@@ -491,10 +491,10 @@ begin
 								INSERT INTO Metier(Designation) VALUES (metier_desig) returning id_metier into metier_id;
 								INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
 							END IF;
-						END LOOP
+						END LOOP;
 					END IF;
 				END IF;				
-			END LOOP
+			END LOOP;
 		END IF;
 	END IF;
 /*
