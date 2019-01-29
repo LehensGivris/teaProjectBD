@@ -246,9 +246,13 @@ declare
     pers_id int;
 	pers_Nom text;
 	pers_Prenom text;
+	pers_desig
+	pers_note
+	pers_job
 
 	--metier
 	metier_id int;
+	metier_desig
 
     --lambert
     lamb_id int;
@@ -441,6 +445,24 @@ begin
     end if;
 
     --personne and metier
+	IF NEW.IndexP IS NOT NULL THEN
+		SELECT REPLACE(NEW.IndexIco,' | ','/ ') INTO tmp;
+		tmp = regexp_split_to_array(tmp,'/ ')
+		IF tmp IS NOT NULL THEN
+			FOR EACH tmp2 IN ARRAY tmp
+			LOOP
+				pers_Nom := (SELECT SUBSTRING(tmp2,'[A-Z]{1,}.[A-Z|A-Z ]{1,}.(?![, ]).(?![a-z]{1,})'));
+				IF pers_Nom IS NULL THEN
+					pers_Nom := ''
+				pers_job := (SELECT SUBSTRING(tmp2,'\(.*.\)'));
+				IF pers_job IS NULL THEN
+					pers_job := ''
+				pers_Prenom := (SELECT SUBSTRING(SELECT TRIM(TRIM(tmp2,pers_Nom),pers_job),'[A-Z]{1}[a-z]{1,}'));
+				pers_desig :=;
+				pers_note :=;
+			END LOOP
+
+
     IF NEW.IndexP IS NOT NULL THEN
 		IF regexp_split_to_array(NEW.IndexP,'/ ') IS NOT NULL THEN
 			foreach tmp2 in array regexp_split_to_array(NEW.IndexP,'/ ')
