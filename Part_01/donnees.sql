@@ -246,9 +246,9 @@ declare
     pers_id int;
 	pers_Nom text;
 	pers_Prenom text;
-	pers_desig
-	pers_note
-	pers_job
+	pers_desig text;
+	pers_note text;
+	pers_job text;
 
 	--metier
 	metier_id int;
