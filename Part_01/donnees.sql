@@ -477,22 +477,18 @@ begin
 					INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
 
 					IF pers_job IS NOT NULL THEN
-						pers_job = (SELECT TRIM(TRIM(pers_job,'\('),'\)'));
-						pers_job = regexp_split_to_array(pers_job,',');
+						pers_job := (SELECT TRIM(TRIM(pers_job,'\('),'\)'));
+						pers_job := regexp_split_to_array(pers_job,',');
 						FOR EACH tmp3 IN ARRAY pers_job
 						LOOP
-							
+							metier_desig := tmp3;
+							IF metier_desig IS NOT NULL THEN
+								INSERT INTO Metier(Designation) VALUES (metier_desig) returning id_metier into metier_id;
+								INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
+							END IF;
 						END LOOP
-
-
 					END IF;
-
-
-
-
-
-				END IF;
-				
+				END IF;				
 			END LOOP
 		END IF;
 	END IF;
