@@ -476,7 +476,7 @@ begin
 
 				END IF;
 				IF pers_Nom IS NULL AND pers_Prenom IS NULL AND pers_job IS NULL AND pers_desig IS NULL THEN
-					pers_note := tmp2
+					pers_note := tmp2;
 					INSERT INTO Personne(Notes) VALUES (pers_note) returning id_pers into pers_id;
 				ELSE
 					INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
