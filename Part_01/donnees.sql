@@ -581,5 +581,5 @@ execute procedure insert_tout();
 COPY Lambert93 FROM 'C:\Users\Louis LE LANN\Documents\GitHub\teaProjectBD\villes.csv' DELIMITER ',' CSV HEADER ENCODING 'ISO-8859-15';
 
 -- Insertion des données dans la table de transfert et séparation dans les bonnes tables
-COPY DataImported FROM 'C:\Users\Louis LE LANN\Documents\GitHub\teaProjectBD\data.csv' DELIMITER '	' CSV HEADER;
+COPY DataImported FROM 'C:\Users\Louis LE LANN\Documents\GitHub\teaProjectBD\Part_01\data.csv' DELIMITER '	' CSV HEADER;
 
