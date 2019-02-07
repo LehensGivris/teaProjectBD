@@ -205,6 +205,55 @@ CREATE TABLE Cindoc_Photographie(
 	FOREIGN KEY (id_photo) REFERENCES Photographie(id_photo)
 );
 
+-- Indexs optimisations
+
+DROP INDEX nameLm ON Lambert93;
+CREATE INDEX nameLm ON Lambert93 USING hash(nom);
+
+DROP INDEX nomP ON Personne;
+CREATE INDEX nomP ON Personne USING hash(nom);
+DROP INDEX pnomP ON Personne;
+CREATE INDEX pnomP ON Personne USING hash(Prenom);
+
+DROP INDEX sujetI ON Sujet;
+CREATE INDEX sujetI ON Sujet USING hash(sujet);
+
+DROP INDEX persMetA ON Personne_Metier;
+CREATE INDEX persMetA ON Personne_Metier(id_pers);
+DROP INDEX persMetB ON Personne_Metier;
+CREATE INDEX persMetB ON Personne_Metier(id_metier);
+
+DROP INDEX persPhoA ON Personne_Photographie;
+CREATE INDEX persPhoA ON Personne_Photographie(id_photo);
+DROP INDEX persPhoB ON Personne_Photographie;
+CREATE INDEX persPhoB ON Personne_Photographie(id_pers);
+
+DROP INDEX fichPhoA ON Fichier_Photographie;
+CREATE INDEX fichPhoA ON Fichier_Photographie(id_photo);
+DROP INDEX fichPhoB ON Fichier_Photographie;
+CREATE INDEX fichPhoB ON Fichier_Photographie(id_fichier);
+
+DROP INDEX sujPhoA ON Sujet_Photographie;
+CREATE INDEX sujPhoA ON Sujet_Photographie(id_photo);
+DROP INDEX sujPhoB ON Sujet_Photographie;
+CREATE INDEX sujPhoB ON Sujet_Photographie(id_sujet);
+
+DROP INDEX icoPhoA ON Iconographique_Photographie;
+CREATE INDEX icoPhoA ON Iconographique_Photographie(id_photo);
+DROP INDEX icoPhoB ON Iconographique_Photographie;
+CREATE INDEX icoPhoB ON Iconographique_Photographie USING hash(index_icono);
+
+DROP INDEX lieuPhoA ON Photographie_Lieu;
+CREATE INDEX lieuPhoA ON Photographie_Lieu(id_photo);
+DROP INDEX lieuPhoB ON Photographie_Lieu;
+CREATE INDEX lieuPhoB ON Photographie_Lieu(id_lambert);
+
+DROP INDEX datePhoA ON Photographie_Date;
+CREATE INDEX datePhoA ON Photographie_Date(id_photo);
+DROP INDEX datePhoB ON Photographie_Date;
+CREATE INDEX datePhoB ON Photographie_Date(id_date);
+
+
 -- Fonctions
 create or replace function insert_tout()
 returns trigger as $$
@@ -596,6 +645,20 @@ create trigger insert_data
 BEFORE insert on DataImported
 for each row
 execute procedure insert_tout();
+
+
+
+-- --------------------------------------
+-- Emplacement Trigger de suppressions des doublons dans les tables où cela est possible et nescessaire
+
+
+-- --------------------------------------
+
+
+
+
+
+
 
 -- Insertion des données Lambert93 (Site originaire des données : http://www.pillot.fr/cartographe/index.php)
 COPY Lambert93 FROM 'C:\Users\louis\Documents\GitHub\teaProjectBD\Part_01\villes.csv' DELIMITER ',' CSV HEADER ENCODING 'ISO-8859-15';
