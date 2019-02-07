@@ -648,12 +648,6 @@ execute procedure insert_tout();
 
 
 
--- --------------------------------------
--- Emplacement Trigger de suppressions des doublons dans les tables où cela est possible et nescessaire
-
-
--- --------------------------------------
-
 
 
 
@@ -665,4 +659,135 @@ COPY Lambert93 FROM 'C:\Users\louis\Documents\GitHub\teaProjectBD\Part_01\villes
 
 -- Insertion des données dans la table de transfert et séparation dans les bonnes tables
 COPY DataImported FROM 'C:\Users\louis\Documents\GitHub\teaProjectBD\Part_01\data.csv' DELIMITER '	' CSV HEADER;
+
+
+-- -----------------------------------------
+-- Emplacement des fonctions des triggers de suppression
+CREATE OR REPLACE FUNCTION verifMetier()
+RETURNS TRIGGER AS $$
+    DECLARE
+    BEGIN
+        IF EXISTS (SELECT * FROM Metier WHERE Designation = New.Designation);
+        THEN
+            RETURN NEW;
+        ELSE
+            RETURN NULL;
+        END IF;
+    END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE OR REPLACE FUNCTION verifPers()
+RETURNS TRIGGER AS $$
+    DECLARE
+    BEGIN
+        IF NOT EXISTS (SELECT * FROM Personne WHERE Nom = New.Nom AND Prenom = New.Prenom AND Representation = New.Representation AND Notes = New.Notes);
+        THEN
+            RETURN NEW;
+        ELSE
+            RETURN NULL;
+        END IF;
+    END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE OR REPLACE FUNCTION verifDate()
+RETURNS TRIGGER AS $$
+    DECLARE
+    BEGIN
+        IF EXISTS (SELECT * FROM Date WHERE jour = New.jour AND jour_bis = New.jour_bis AND mois = New.mois AND mois_bis = New.mois_bis AND annee = New.annee AND annee_bis = New.annee_bis);
+        THEN
+            RETURN NEW;
+        ELSE
+            RETURN NULL;
+        END IF;
+    END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE OR REPLACE FUNCTION verifLamb()
+RETURNS TRIGGER AS $$
+    DECLARE
+    BEGIN
+        IF EXISTS (SELECT * FROM Lambert93 WHERE nom = New.nom);
+        THEN
+            RETURN NEW;
+        ELSE
+            RETURN NULL;
+        END IF;
+    END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE OR REPLACE FUNCTION verifSujet()
+RETURNS TRIGGER AS $$
+    DECLARE
+    BEGIN
+        IF NOT EXISTS (SELECT * FROM Sujet WHERE Sujet = New.Sujet);
+        THEN
+            RETURN NEW;
+        ELSE
+            RETURN NULL;
+        END IF;
+    END;
+$$ LANGUAGE PLPGSQL;
+
+CREATE OR REPLACE FUNCTION verifFichier()
+RETURNS TRIGGER AS $$
+    DECLARE
+    BEGIN
+        IF NOT EXISTS (SELECT * FROM Fichier WHERE NomFichier = New.NomFichier);
+        THEN
+            RETURN NEW;
+        ELSE
+            RETURN NULL;
+        END IF;
+    END;
+$$ LANGUAGE PLPGSQL;
+
+-- Emplacement Trigger de suppressions des doublons dans les tables où cela est possible et nescessaire
+
+DROP TRIGGER IF EXISTS checkMetier ON Metier;
+
+CREATE TRIGGER checkMetier
+BEFORE INSERT ON Metier
+FOR EACH ROW
+EXECUTE PROCEDURE verifMetier();
+
+
+DROP TRIGGER IF EXISTS checkPers ON Personne;
+
+CREATE TRIGGER checkPers
+BEFORE INSERT ON Personne
+FOR EACH ROW
+EXECUTE PROCEDURE verifPers();
+
+
+DROP TRIGGER IF EXISTS checkDate ON Date;
+
+CREATE TRIGGER checkDate
+BEFORE INSERT ON Date
+FOR EACH ROW
+EXECUTE PROCEDURE verifDate();
+
+
+DROP TRIGGER IF EXISTS checkLamb ON Lambert93;
+
+CREATE TRIGGER checkLamb
+BEFORE INSERT ON Lambert93
+FOR EACH ROW
+EXECUTE PROCEDURE verifLamb();
+
+
+DROP TRIGGER IF EXISTS checkSujet ON Sujet;
+
+CREATE TRIGGER checkSujet
+BEFORE INSERT ON Sujet
+FOR EACH ROW
+EXECUTE PROCEDURE verifSujet();
+
+
+DROP TRIGGER IF EXISTS checkFichier ON Fichier;
+
+CREATE TRIGGER checkFichier
+BEFORE INSERT ON Fichier
+FOR EACH ROW
+EXECUTE PROCEDURE verifFichier();
+
 
