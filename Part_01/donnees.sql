@@ -207,50 +207,50 @@ CREATE TABLE Cindoc_Photographie(
 
 -- Indexs optimisations
 
-DROP INDEX nameLm ON Lambert93;
+DROP INDEX IF EXISTS nameLm;
 CREATE INDEX nameLm ON Lambert93 USING hash(nom);
 
-DROP INDEX nomP ON Personne;
+DROP INDEX IF EXISTS nomP;
 CREATE INDEX nomP ON Personne USING hash(nom);
-DROP INDEX pnomP ON Personne;
+DROP INDEX IF EXISTS pnomP;
 CREATE INDEX pnomP ON Personne USING hash(Prenom);
 
-DROP INDEX sujetI ON Sujet;
+DROP INDEX IF EXISTS sujetI;
 CREATE INDEX sujetI ON Sujet USING hash(sujet);
 
-DROP INDEX persMetA ON Personne_Metier;
+DROP INDEX IF EXISTS persMetA;
 CREATE INDEX persMetA ON Personne_Metier(id_pers);
-DROP INDEX persMetB ON Personne_Metier;
+DROP INDEX IF EXISTS persMetB;
 CREATE INDEX persMetB ON Personne_Metier(id_metier);
 
-DROP INDEX persPhoA ON Personne_Photographie;
+DROP INDEX IF EXISTS persPhoA;
 CREATE INDEX persPhoA ON Personne_Photographie(id_photo);
-DROP INDEX persPhoB ON Personne_Photographie;
+DROP INDEX IF EXISTS persPhoB;
 CREATE INDEX persPhoB ON Personne_Photographie(id_pers);
 
-DROP INDEX fichPhoA ON Fichier_Photographie;
+DROP INDEX IF EXISTS fichPhoA;
 CREATE INDEX fichPhoA ON Fichier_Photographie(id_photo);
-DROP INDEX fichPhoB ON Fichier_Photographie;
+DROP INDEX IF EXISTS fichPhoB;
 CREATE INDEX fichPhoB ON Fichier_Photographie(id_fichier);
 
-DROP INDEX sujPhoA ON Sujet_Photographie;
+DROP INDEX IF EXISTS sujPhoA;
 CREATE INDEX sujPhoA ON Sujet_Photographie(id_photo);
-DROP INDEX sujPhoB ON Sujet_Photographie;
+DROP INDEX IF EXISTS sujPhoB;
 CREATE INDEX sujPhoB ON Sujet_Photographie(id_sujet);
 
-DROP INDEX icoPhoA ON Iconographique_Photographie;
-CREATE INDEX icoPhoA ON Iconographique_Photographie(id_photo);
-DROP INDEX icoPhoB ON Iconographique_Photographie;
-CREATE INDEX icoPhoB ON Iconographique_Photographie USING hash(index_icono);
+DROP INDEX IF EXISTS icoPhoA;
+CREATE INDEX icoPhoA ON iconographie_Photographie(id_photo);
+DROP INDEX IF EXISTS icoPhoB;
+CREATE INDEX icoPhoB ON iconographie_Photographie USING hash(index_icono);
 
-DROP INDEX lieuPhoA ON Photographie_Lieu;
+DROP INDEX IF EXISTS lieuPhoA;
 CREATE INDEX lieuPhoA ON Photographie_Lieu(id_photo);
-DROP INDEX lieuPhoB ON Photographie_Lieu;
+DROP INDEX IF EXISTS lieuPhoB;
 CREATE INDEX lieuPhoB ON Photographie_Lieu(id_lambert);
 
-DROP INDEX datePhoA ON Photographie_Date;
+DROP INDEX IF EXISTS datePhoA;
 CREATE INDEX datePhoA ON Photographie_Date(id_photo);
-DROP INDEX datePhoB ON Photographie_Date;
+DROP INDEX IF EXISTS datePhoB;
 CREATE INDEX datePhoB ON Photographie_Date(id_date);
 
 
