@@ -684,19 +684,7 @@ begin
 							INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
 						END IF;
 					END IF;
-				END IF;
-
-/*
-				IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig AND Notes = pers_note) THEN
-					pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig AND Notes = pers_note);
-				ELSE
-					IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom) THEN
-						pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom);
-					ELSE
-						INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
-					END IF;
-				END IF;
-*/				
+				END IF;		
 
 				IF pers_job IS NOT NULL THEN
 					pers_job := (SELECT REPLACE(REPLACE(pers_job,'(',''),')',''));
