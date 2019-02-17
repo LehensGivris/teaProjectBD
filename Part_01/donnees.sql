@@ -675,7 +675,7 @@ begin
 						END IF;
 					ELSE
 						IF pers_note IS NOT NULL THEN
-							IF EXISTS (SELECT * FROM Notes WHERE Notes = pers_note) THEN
+							IF EXISTS (SELECT * FROM Personne WHERE Notes = pers_note) THEN
 								pers_id := (SELECT id_pers FROM Personne WHERE Notes = pers_note LIMIT 1);
 							ELSE
 								INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
