@@ -596,11 +596,107 @@ begin
 					END IF;
 				END IF;
 
-				IF NOT EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig AND Notes = pers_note) THEN
-					INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+				IF pers_Nom IS NOT NULL THEN
+					IF pers_Prenom IS NOT NULL THEN
+						IF pers_desig IS NOT NULL THEN
+							IF pers_note IS NOT NULL THEN
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig AND Notes = pers_note) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig AND Notes = pers_note LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							ELSE
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							END IF;
+						ELSE
+							IF pers_note IS NOT NULL THEN
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Notes = pers_note) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Notes = pers_note LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							ELSE
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							END IF;
+						END IF;
+					ELSE
+						IF pers_desig IS NOT NULL THEN
+							IF pers_note IS NOT NULL THEN
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Representation = pers_desig AND Notes = pers_note) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Representation = pers_desig AND Notes = pers_note LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							ELSE
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Representation = pers_desig) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Representation = pers_desig LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							END IF;
+						ELSE
+							IF pers_note IS NOT NULL THEN
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Notes = pers_note) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Notes = pers_note LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							ELSE
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							END IF;
+						END IF;
+					END IF;
 				ELSE
-					pers_id := (select id_pers from Personne where Nom=pers_Nom AND Prenom=pers_Prenom AND Representation=pers_desig AND Notes=pers_note);
+					IF pers_desig IS NOT NULL THEN
+						IF pers_note IS NOT NULL THEN
+							IF EXISTS (SELECT * FROM Personne WHERE Representation = pers_desig AND Notes = pers_note) THEN
+								pers_id := (SELECT id_pers FROM Personne WHERE Representation = pers_desig AND Notes = pers_note LIMIT 1);
+							ELSE
+								INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+							END IF;
+						ELSE
+							IF EXISTS (SELECT * FROM Personne WHERE Representation = pers_desig) THEN
+								pers_id := (SELECT id_pers FROM Personne WHERE Representation = pers_desig LIMIT 1);
+							ELSE
+								INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+							END IF;
+						END IF;
+					ELSE
+						IF pers_note IS NOT NULL THEN
+							IF EXISTS (SELECT * FROM Notes WHERE Notes = pers_note) THEN
+								pers_id := (SELECT id_pers FROM Personne WHERE Notes = pers_note LIMIT 1);
+							ELSE
+								INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+							END IF;
+						ELSE
+							INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+						END IF;
+					END IF;
 				END IF;
+
+/*
+				IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig AND Notes = pers_note) THEN
+					pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig AND Notes = pers_note);
+				ELSE
+					IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom) THEN
+						pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom);
+					ELSE
+						INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+					END IF;
+				END IF;
+*/				
 
 				IF pers_job IS NOT NULL THEN
 					pers_job := (SELECT REPLACE(REPLACE(pers_job,'(',''),')',''));
