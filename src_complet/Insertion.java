@@ -63,9 +63,10 @@ public class Insertion {
                 if(!result.toString().endsWith(" (")){
                     result.append(", ");
                 }
-                result.append(v);
+                result.append("'"+v+"'");
             }
         }
+        result.append(")");
         return result.toString();
     }
 }

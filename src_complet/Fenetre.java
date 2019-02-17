@@ -1,10 +1,14 @@
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 /*
@@ -602,7 +606,7 @@ public class Fenetre extends javax.swing.JFrame {
             for (int i = 0; i < lbls.size(); i++) {
                 boolean aVoir = i < nbCol;
                 lbls.get(i).setVisible(aVoir);
-                lbls.get(i).setText(aVoir ? "    "+bdd.base.get(table)[i] : "");
+                lbls.get(i).setText(aVoir ? "    " + bdd.base.get(table)[i] : "");
                 tfs.get(i).setVisible(aVoir);
                 tfs.get(i).setText("");
             }
@@ -611,14 +615,23 @@ public class Fenetre extends javax.swing.JFrame {
     }//GEN-LAST:event_jComboBoxInsertActionPerformed
 
     private void jButtonInsertActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonInsertActionPerformed
-        HashMap<String,String> values = new HashMap<>();
+        HashMap<String, String> values = new HashMap<>();
         String table = (String) jComboBoxInsert.getSelectedItem();
         for (int i = 0; i < bdd.base.get(table).length; i++) {
             values.put(bdd.base.get(table)[i], tfs.get(i).getText());
         }
         Insertion insertion = new Insertion((String) jComboBoxInsert.getSelectedItem(), values);
-        System.out.println(insertion.getSqlRequest());
-        
+        String query = insertion.getSqlRequest();
+        Statement stmt;
+        System.out.println();
+        try {
+            stmt = bdd.connection.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+        } catch (SQLException ex) {
+            System.out.println(ex);
+        }
+        JOptionPane jop1 = new JOptionPane();
+        jop1.showMessageDialog(null, "Ligne insérée dans la BD", "Message informatif", JOptionPane.INFORMATION_MESSAGE);
     }//GEN-LAST:event_jButtonInsertActionPerformed
 
     /**
