@@ -253,6 +253,27 @@ CREATE INDEX datePhoA ON Photographie_Date(id_photo);
 DROP INDEX IF EXISTS datePhoB;
 CREATE INDEX datePhoB ON Photographie_Date(id_date);
 
+CREATE OR REPLACE FUNCTION norm_text_latin(character varying) 
+RETURNS character varying AS $$
+DECLARE 
+        p_str    alias for $1; 
+        v_str    varchar; 
+BEGIN 
+        select translate(p_str, 'ÀÁÂÃÄÅ', 'AAAAAA') into v_str; 
+        select translate(v_str, 'ÉÈËÊ', 'EEEE') into v_str; 
+        select translate(v_str, 'ÌÍÎÏ', 'IIII') into v_str; 
+        select translate(v_str, 'ÌÍÎÏ', 'IIII') into v_str; 
+        select translate(v_str, 'ÒÓÔÕÖ', 'OOOOO') into v_str; 
+        select translate(v_str, 'ÙÚÛÜ', 'UUUU') into v_str; 
+        select translate(v_str, 'àáâãäå', 'aaaaaa') into v_str; 
+        select translate(v_str, 'èéêë', 'eeee') into v_str; 
+        select translate(v_str, 'ìíîï', 'iiii') into v_str; 
+        select translate(v_str, 'òóôõö', 'ooooo') into v_str; 
+        select translate(v_str, 'ùúûü', 'uuuu') into v_str; 
+        select translate(v_str, 'Çç', 'Cc') into v_str; 
+        return v_str; 
+END;
+$$LANGUAGE 'plpgsql' VOLATILE; 
 
 -- Fonctions
 create or replace function insert_tout()
@@ -262,6 +283,8 @@ declare
     tmp text;
     tmp2 text;
 	tmp3 text;
+	tmp8 text;
+	tmp9 text;
 
 	tmp4 text[];
 	tmp5 text[];
@@ -502,123 +525,95 @@ begin
 
     --personne and metier
 	IF NEW.IndexP IS NOT NULL THEN
-		SELECT REPLACE(NEW.IndexIco,' | ','/') INTO tmp;
+		SELECT REPLACE(NEW.IndexP,' | ','/') INTO tmp;
 		tmp4 := regexp_split_to_array(tmp,'/');
 		IF tmp2 IS NOT NULL THEN
 			FOREACH tmp2 IN ARRAY tmp4
 			LOOP
-				pers_Nom := (SELECT SUBSTRING(tmp2,'[A-Z]{1,}.[A-Z|A-Z ]{1,}.(?![, ]).(?![a-z]{1,})'));
-				IF pers_Nom IS NULL THEN
-				pers_Nom := '';
-				END IF;
-				pers_job := (SELECT SUBSTRING(tmp2,'\(.*.\)'));
-				IF pers_job IS NULL THEN
-					pers_job := '';
-				END IF;
-				pers_Prenom := (SELECT SUBSTRING(TRIM(TRIM(tmp2,pers_Nom),pers_job),'[A-Z]{1}[a-z]{1,}'));
-				IF pers_Prenom IS NULL THEN
-					pers_Prenom := '';
-				END IF;
-				pers_desig := (SELECT SUBSTRING(TRIM(TRIM(TRIM(tmp2,pers_Nom),pers_job),pers_Prenom),'[a-z]{1,}'));
-				IF pers_desig IS NULL THEN
-					pers_desig := '';
-				END IF;
-				pers_note := tmp2;--(SELECT SUBSTRING(tmp2,'voir aussi%'),'voir aussi');
-				IF pers_note IS NULL THEN
-					pers_note := '';
+				tmp9 := norm_text_latin(tmp2);
+
+				pers_Nom := (SELECT SUBSTRING(tmp9,'((([ A-Z]|-[A-Z]|[A-Z]){2,}[,]{0,1})[ ]{1,})'));
+
+				tmp9 = (SELECT REPLACE(tmp9,pers_Nom,''));
+				
+				IF pers_Nom IS NOT NULL THEN
+					pers_Nom = (SELECT REPLACE(pers_Nom,',',''));
+					pers_Nom = (SELECT TRIM(pers_Nom));
+					pers_job := (SELECT SUBSTRING(tmp9,'\(.*.\)'));
+					
+					IF pers_Job IS NOT NULL THEN
+						tmp9 = (SELECT REPLACE(tmp9,pers_job,''));
+					END IF;
+					
+					pers_note := (SELECT SUBSTRING(tmp9, ', [a-z]{1,}'));
+					IF pers_note IS NOT NULL THEN
+						pers_note = (SELECT REPLACE(pers_note,',',''));
+						tmp9 = (SELECT REPLACE(tmp9,pers_note,''));
+						tmp9 = (SELECT REPLACE(tmp9,'voir aussi',''));
+					END IF;
+
+					IF tmp9 IS NOT NULL THEN
+						pers_Prenom := tmp9;
+						IF pers_Prenom = '' THEN
+							pers_Prenom = NULL;
+						END IF;
+						IF pers_Prenom IS NOT NULL THEN
+							pers_Prenom = (SELECT TRIM(pers_Prenom));
+							tmp9 = pers_Prenom;
+							pers_Prenom = (SELECT SUBSTRING(pers_Prenom,0,strpos(pers_Prenom,',')));
+							tmp9 = (SELECT REPLACE(tmp9,pers_Prenom,''));
+						END IF;
+					END IF;
+
+					IF tmp9 IS NOT NULL THEN
+						pers_desig := pers_note || ' ' || tmp9;
+						pers_desig = (SELECT REPLACE(pers_desig,',',''));
+					END IF;
+
+					pers_note = (SELECT Substring(pers_Prenom,strpos(pers_Prenom,'voir aussi'),length(pers_Prenom)));
+				ELSE
+					pers_note = tmp2;
 				END IF;
 
+				if not exists (select * from Personne where Nom=pers_Nom AND Prenom=pers_Prenom AND Representation=pers_desig AND Notes=pers_note) then
+					INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+				else
+					pers_id := (select id_pers from Personne where Nom=pers_Nom AND Prenom=pers_Prenom AND Representation=pers_desig AND Notes=pers_note);
+				end if;
 
 				
-				IF pers_Nom IS NULL AND pers_Prenom IS NULL AND pers_job IS NULL AND pers_desig IS NULL THEN
-					pers_note := tmp2;
-					INSERT INTO Personne(Notes) VALUES (pers_note) returning id_pers into pers_id;
-				ELSE
-					INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+				
 
-					IF pers_job IS NOT NULL THEN
-						pers_job := (SELECT TRIM(TRIM(pers_job,'\('),'\)'));
+				IF pers_job IS NOT NULL THEN
+					pers_job := (SELECT REPLACE(REPLACE(pers_job,'\(',''),'\)',''));
 
-						tmpI := (select array_length(string_to_array(pers_job, ','), 1) - 1);
+					tmpI := (select array_length(string_to_array(pers_job, ','), 1) - 1);
+					
+					IF tmpI IS NOT NULL AND tmpI>0 THEN
 						
-						IF tmpI IS NOT NULL AND tmpI>0 THEN
-							
-							tmp5 := regexp_split_to_array(pers_job,',');
-							FOREACH tmp3 IN ARRAY tmp5
-							LOOP
-								metier_desig := tmp3;
-								IF metier_desig IS NOT NULL THEN
-									INSERT INTO Metier(Designation) VALUES (metier_desig) returning id_metier into metier_id;
-									INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
-								END IF;
-							END LOOP;
-							
-							tmpI := 1;
-						ELSE
+						tmp5 := regexp_split_to_array(pers_job,',');
+						FOREACH tmp3 IN ARRAY tmp5
+						LOOP
+							metier_desig := tmp3;
 							IF metier_desig IS NOT NULL THEN
 								INSERT INTO Metier(Designation) VALUES (metier_desig) returning id_metier into metier_id;
 								INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
 							END IF;
-						END IF;						
-					END IF;
-				END IF;			
+						END LOOP;
+						
+						tmpI := 1;
+					ELSE
+						IF pers_job IS NOT NULL THEN
+							INSERT INTO Metier(Designation) VALUES (pers_job) returning id_metier into metier_id;
+							INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
+						END IF;
+					END IF;						
+				END IF;
+				--END IF;			
 			END LOOP;
 		END IF;
 	END IF;
---Old Méthode Personne/Métier (Ne Fonctionne pas correctement)
-/*
-    IF NEW.IndexP IS NOT NULL THEN
-		IF regexp_split_to_array(NEW.IndexP,'/ ') IS NOT NULL THEN
-			foreach tmp2 in array regexp_split_to_array(NEW.IndexP,'/ ')
-			loop
-				if tmp2 is not null then
-					IF regexp_split_to_array(tmp2,' ') IS NOT NULL THEN
-						foreach tmp3 in array regexp_split_to_array(tmp2,' ')
-							loop
-								IF tmp3 IS NOT NULL THEN
-									IF tmp3 ~ '[A-Z]{1,},' THEN
-										pers_Nom := (SELECT REPLACE(tmp3,',',''));
-									END IF;
-
-									IF tmp3 ~ '[A-Z]{1}[a-z]{1,}' THEN
-										pers_Prenom := tmp3;
-									END IF;
-
-									IF tmp3 ~ '\([a-z]{1,}\)' OR tmp3 ~ '\({0,1}[a-z]{1,}\)' OR tmp3 ~ '\([a-z]{1,}\){0,1}' THEN
-										IF NOT EXISTS(SELECT Designation FROM Metier WHERE Designation=REPLACE(REPLACE(tmp3,'(',''),')','')) THEN
-											INSERT INTO Metier(Designation) VALUES (REPLACE(REPLACE(tmp3,'(',''),')','')) returning id_metier into metier_id;
-										END IF;
-										IF pers_Nom IS NOT NULL THEN
-											IF pers_Prenom IS NOT NULL THEN
-												IF NOT EXISTS(SELECT * FROM Personne WHERE Nom=pers_Nom AND Prenom=pers_Prenom) THEN
-													INSERT INTO Personne(Nom,Prenom) VALUES (pers_Nom,pers_Prenom) returning id_pers into pers_id;
-												END IF;
-											ELSE
-												IF NOT EXISTS(SELECT * FROM Personne WHERE Nom=pers_Nom) THEN
-													INSERT INTO Personne(Nom) VALUES (pers_Nom) returning id_pers into pers_id;
-												END IF;
-											END IF;
-										END IF;
-										IF pers_id IS NOT NULL AND metier_id IS NOT NULL THEN
-											IF NOT EXISTS(SELECT * FROM Personne_Metier WHERE id_pers=pers_id AND id_metier = metier_id) THEN
-												INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
-											END IF;
-											pers_id = NULL;
-											metier_id = NULL;
-										END IF;
-									END IF;
-
-									IF tmp3 ~ '' THEN
-
-									END IF;
-								END IF;
-							END LOOP;
-					END IF;
-				end if;
-			end loop;
-		END IF;
-	END IF;
-*/
+	
     --lambert
 	IF NEW.Ville IS NOT NULL THEN
 		IF regexp_split_to_array(new.Ville,', ') IS NOT NULL THEN
@@ -655,10 +650,10 @@ execute procedure insert_tout();
 
 
 -- Insertion des données Lambert93 (Site originaire des données : http://www.pillot.fr/cartographe/index.php)
-COPY Lambert93 FROM 'C:\Users\louis\Documents\GitHub\teaProjectBD\Part_01\villes.csv' DELIMITER ',' CSV HEADER ENCODING 'ISO-8859-15';
+COPY Lambert93 FROM 'C:\Users\Louis LE LANN\Documents\GitHub\teaProjectBD\Part_01\villes.csv' DELIMITER ',' CSV HEADER ENCODING 'ISO-8859-15';
 
 -- Insertion des données dans la table de transfert et séparation dans les bonnes tables
-COPY DataImported FROM 'C:\Users\louis\Documents\GitHub\teaProjectBD\Part_01\data.csv' DELIMITER '	' CSV HEADER;
+COPY DataImported FROM 'C:\Users\Louis LE LANN\Documents\GitHub\teaProjectBD\Part_01\data.csv' DELIMITER '	' CSV HEADER;
 
 
 -- -----------------------------------------
