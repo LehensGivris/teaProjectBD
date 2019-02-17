@@ -1,3 +1,6 @@
+
+import javax.swing.DefaultListModel;
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -15,6 +18,12 @@ public class Fenetre extends javax.swing.JFrame {
      */
     public Fenetre() {
         initComponents();
+        
+        model2 = new DefaultListModel();
+        model2.addElement("Requete 1");
+        model2.addElement("Requete 2");
+        model2.addElement("Requete 3");
+        jList2.setModel(model2);
     }
 
     /**
@@ -148,10 +157,16 @@ public class Fenetre extends javax.swing.JFrame {
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
+        jList2.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane2.setViewportView(jList2);
 
         jButton5.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         jButton5.setText("REMOVE");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
 
         jButton6.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         jButton6.setText("SELECT");
@@ -343,6 +358,13 @@ public class Fenetre extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton3ActionPerformed
 
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        int index = jList2.getSelectedIndex();
+        if(index != -1){
+            model2.removeElementAt(index);
+        }
+    }//GEN-LAST:event_jButton5ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -378,6 +400,7 @@ public class Fenetre extends javax.swing.JFrame {
         });
     }
 
+    private DefaultListModel model2;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
