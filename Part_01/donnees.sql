@@ -554,7 +554,7 @@ begin
 
 					IF tmp9 IS NOT NULL THEN
 						pers_Prenom := tmp9;
-						IF pers_Prenom == '' THEN
+						IF pers_Prenom = '' THEN
 							pers_Prenom = NULL;
 						END IF;
 						IF pers_Prenom IS NOT NULL THEN
@@ -571,21 +571,9 @@ begin
 					END IF;
 
 					pers_note = (SELECT Substring(pers_Prenom,strpos(pers_Prenom,'voir aussi'),length(pers_Prenom)));
-				END IF;
-				
-				
-				--pers_desig := (SELECT SUBSTRING(SUBSTRING(SUBSTRING(SUBSTRING(tmp2,pers_Nom),pers_job),pers_Prenom),'[a-z]{1,}'));
-				--pers_note := tmp9;--(SELECT SUBSTRING(tmp2,'voir aussi%'),'voir aussi');
-				
-				
-				--pers_Nom := (SELECT SUBSTRING(tmp2,'([A-Z]?[-A-Z]){2,}'));
-				
-				/*
-				IF pers_Nom IS NULL AND pers_Prenom IS NULL AND pers_job IS NULL AND pers_desig IS NULL THEN
-					pers_note := tmp2;
-					INSERT INTO Personne(Notes) VALUES (pers_note) returning id_pers into pers_id;
 				ELSE
-				*/
+					pers_note = tmp2;
+				END IF;
 
 				if not exists (select * from Personne where Nom=pers_Nom AND Prenom=pers_Prenom AND Representation=pers_desig AND Notes=pers_note) then
 					INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
@@ -597,7 +585,7 @@ begin
 				
 
 				IF pers_job IS NOT NULL THEN
-					pers_job := (SELECT SUBSTRING(SUBSTRING(pers_job,'\('),'\)'));
+					pers_job := (SELECT REPLACE(REPLACE(pers_job,'\(',''),'\)',''));
 
 					tmpI := (select array_length(string_to_array(pers_job, ','), 1) - 1);
 					
@@ -625,60 +613,7 @@ begin
 			END LOOP;
 		END IF;
 	END IF;
---Old Méthode Personne/Métier (Ne Fonctionne pas correctement)
-/*
-    IF NEW.IndexP IS NOT NULL THEN
-		IF regexp_split_to_array(NEW.IndexP,'/ ') IS NOT NULL THEN
-			foreach tmp2 in array regexp_split_to_array(NEW.IndexP,'/ ')
-			loop
-				if tmp2 is not null then
-					IF regexp_split_to_array(tmp2,' ') IS NOT NULL THEN
-						foreach tmp3 in array regexp_split_to_array(tmp2,' ')
-							loop
-								IF tmp3 IS NOT NULL THEN
-									IF tmp3 ~ '[A-Z]{1,},' THEN
-										pers_Nom := (SELECT REPLACE(tmp3,',',''));
-									END IF;
-
-									IF tmp3 ~ '[A-Z]{1}[a-z]{1,}' THEN
-										pers_Prenom := tmp3;
-									END IF;
-
-									IF tmp3 ~ '\([a-z]{1,}\)' OR tmp3 ~ '\({0,1}[a-z]{1,}\)' OR tmp3 ~ '\([a-z]{1,}\){0,1}' THEN
-										IF NOT EXISTS(SELECT Designation FROM Metier WHERE Designation=REPLACE(REPLACE(tmp3,'(',''),')','')) THEN
-											INSERT INTO Metier(Designation) VALUES (REPLACE(REPLACE(tmp3,'(',''),')','')) returning id_metier into metier_id;
-										END IF;
-										IF pers_Nom IS NOT NULL THEN
-											IF pers_Prenom IS NOT NULL THEN
-												IF NOT EXISTS(SELECT * FROM Personne WHERE Nom=pers_Nom AND Prenom=pers_Prenom) THEN
-													INSERT INTO Personne(Nom,Prenom) VALUES (pers_Nom,pers_Prenom) returning id_pers into pers_id;
-												END IF;
-											ELSE
-												IF NOT EXISTS(SELECT * FROM Personne WHERE Nom=pers_Nom) THEN
-													INSERT INTO Personne(Nom) VALUES (pers_Nom) returning id_pers into pers_id;
-												END IF;
-											END IF;
-										END IF;
-										IF pers_id IS NOT NULL AND metier_id IS NOT NULL THEN
-											IF NOT EXISTS(SELECT * FROM Personne_Metier WHERE id_pers=pers_id AND id_metier = metier_id) THEN
-												INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
-											END IF;
-											pers_id = NULL;
-											metier_id = NULL;
-										END IF;
-									END IF;
-
-									IF tmp3 ~ '' THEN
-
-									END IF;
-								END IF;
-							END LOOP;
-					END IF;
-				end if;
-			end loop;
-		END IF;
-	END IF;
-*/
+	
     --lambert
 	IF NEW.Ville IS NOT NULL THEN
 		IF regexp_split_to_array(new.Ville,', ') IS NOT NULL THEN
