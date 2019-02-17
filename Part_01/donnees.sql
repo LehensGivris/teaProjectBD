@@ -273,7 +273,58 @@ BEGIN
         select translate(v_str, 'Çç', 'Cc') into v_str; 
         return v_str; 
 END;
-$$LANGUAGE 'plpgsql' VOLATILE; 
+$$LANGUAGE 'plpgsql'; 
+
+CREATE OR REPLACE FUNCTION verifMois(month character varying)
+RETURNS character varying AS $$
+DECLARE
+	testM TEXT;
+BEGIN
+	testM := (SELECT LOWER(norm_text_latin(month)));
+	IF testM IS NULL OR testM = '' THEN
+		RETURN NULL;
+	END IF; 
+
+	IF (SELECT month SIMILAR TO '[mai]{2,3}') THEN
+		RETURN 'mai';
+	END IF;
+	IF (SELECT month SIMILAR TO '[mars]{3,4}') THEN
+		RETURN 'mars';
+	END IF;
+	IF (SELECT month SIMILAR TO '[juin]{2,4}') THEN
+		RETURN 'juin';
+	END IF;
+	IF (SELECT month SIMILAR TO '[aout]{2,4}') THEN
+		RETURN 'aout';
+	END IF;
+	IF (SELECT month SIMILAR TO '[avril]{3,5}') THEN
+		RETURN 'avril';
+	END IF;
+	IF (SELECT month SIMILAR TO '[janvier]{6,7}') THEN
+		RETURN 'janvier';
+	END IF;
+	IF (SELECT month SIMILAR TO '[fevrier]{6,7}') THEN
+		RETURN 'fevrier';
+	END IF;
+	IF (SELECT month SIMILAR TO '[juillet]{4,7}') THEN
+		RETURN 'juillet';
+	END IF;
+	IF (SELECT month SIMILAR TO '[octobre]{4,7}') THEN
+		RETURN 'octobre';
+	END IF;
+	IF (SELECT month SIMILAR TO '[novembre]{6,8}') THEN
+		RETURN 'novembre';
+	END IF;
+	IF (SELECT month SIMILAR TO '[decembre]{6,8}') THEN
+		RETURN 'decembre';
+	END IF;
+	IF (SELECT month SIMILAR TO '[septembre]{7,9}') THEN
+		RETURN 'septembre';
+	END IF;
+	
+	RETURN testM;
+END;
+$$LANGUAGE 'plpgsql';
 
 -- Fonctions
 create or replace function insert_tout()
@@ -393,10 +444,11 @@ begin
 							END IF;
 
 							IF cardinality(regexp_split_to_array(date_cache[2],'-')) = 2 THEN
-								date_m := (regexp_split_to_array(date_cache[2],'-'))[1];
-								date_m_b := (regexp_split_to_array(date_cache[2],'-'))[2];
+							--Here
+								date_m := (SELECT verifMois((regexp_split_to_array(date_cache[2],'-'))[1]));
+								date_m_b := (SELECT verifMois((regexp_split_to_array(date_cache[2],'-'))[2]));
 							ELSE
-								date_m := (date_cache[2]);
+								date_m := (SELECT verifMois(date_cache[2]));
 							END IF;
 
 							IF cardinality(regexp_split_to_array(date_cache[3],'-')) = 2 THEN
@@ -407,10 +459,11 @@ begin
 							END IF;
 						WHEN cardinality(date_cache) = 2 THEN
 							IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
-								date_m := (regexp_split_to_array(date_cache[1],'-'))[1];
-								date_m_b := (regexp_split_to_array(date_cache[1],'-'))[2];
+							--Here
+								date_m := (SELECT verifMois((regexp_split_to_array(date_cache[1],'-'))[1]));
+								date_m_b := (SELECT verifMois((regexp_split_to_array(date_cache[1],'-'))[2]));
 							ELSE
-								date_m := (date_cache[1]);
+								date_m := (SELECT verifMois(date_cache[1]));
 							END IF;
 
 							IF cardinality(regexp_split_to_array(date_cache[2],'-')) = 2 THEN
@@ -553,7 +606,7 @@ begin
 					END IF;
 
 					IF tmp9 IS NOT NULL THEN
-						pers_Prenom := tmp9;
+						pers_Prenom := (SELECT TRIM(tmp9));
 						IF pers_Prenom = '' THEN
 							pers_Prenom = NULL;
 						END IF;
@@ -566,26 +619,129 @@ begin
 					END IF;
 
 					IF tmp9 IS NOT NULL THEN
-						pers_desig := pers_note || ' ' || tmp9;
+						pers_desig := pers_note || tmp9;
 						pers_desig = (SELECT REPLACE(pers_desig,',',''));
 					END IF;
 
 					pers_note = (SELECT Substring(pers_Prenom,strpos(pers_Prenom,'voir aussi'),length(pers_Prenom)));
 				ELSE
 					pers_note = tmp2;
+					pers_Nom = (SELECT SUBSTRING(pers_note,'[A-Z]{2,}'));
 				END IF;
 
-				if not exists (select * from Personne where Nom=pers_Nom AND Prenom=pers_Prenom AND Representation=pers_desig AND Notes=pers_note) then
-					INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
-				else
-					pers_id := (select id_pers from Personne where Nom=pers_Nom AND Prenom=pers_Prenom AND Representation=pers_desig AND Notes=pers_note);
-				end if;
+				IF pers_Prenom = '' THEN
+					pers_Prenom = NULL;
+				ELSE
+					pers_Prenom = (SELECT TRIM(pers_Prenom));
+				END IF;
 
-				
-				
+				IF pers_desig = '' THEN
+					pers_desig = NULL;
+				ELSE
+					pers_desig = (SELECT TRIM(pers_desig));
+				END IF;
+
+				IF pers_note = '' THEN
+					pers_note = NULL;
+				ELSE
+					pers_note = (SELECT TRIM(pers_note));
+					IF pers_note = pers_Prenom THEN
+						pers_note = NULL;
+					END IF;
+				END IF;
+
+				IF pers_Nom IS NOT NULL THEN
+					IF pers_Prenom IS NOT NULL THEN
+						IF pers_desig IS NOT NULL THEN
+							IF pers_note IS NOT NULL THEN
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig AND Notes = pers_note) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig AND Notes = pers_note LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							ELSE
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							END IF;
+						ELSE
+							IF pers_note IS NOT NULL THEN
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Notes = pers_note) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Notes = pers_note LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							ELSE
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							END IF;
+						END IF;
+					ELSE
+						IF pers_desig IS NOT NULL THEN
+							IF pers_note IS NOT NULL THEN
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Representation = pers_desig AND Notes = pers_note) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Representation = pers_desig AND Notes = pers_note LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							ELSE
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Representation = pers_desig) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Representation = pers_desig LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							END IF;
+						ELSE
+							IF pers_note IS NOT NULL THEN
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Notes = pers_note) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom AND Notes = pers_note LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							ELSE
+								IF EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom) THEN
+									pers_id := (SELECT id_pers FROM Personne WHERE Nom = pers_Nom LIMIT 1);
+								ELSE
+									INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+								END IF;
+							END IF;
+						END IF;
+					END IF;
+				ELSE
+					IF pers_desig IS NOT NULL THEN
+						IF pers_note IS NOT NULL THEN
+							IF EXISTS (SELECT * FROM Personne WHERE Representation = pers_desig AND Notes = pers_note) THEN
+								pers_id := (SELECT id_pers FROM Personne WHERE Representation = pers_desig AND Notes = pers_note LIMIT 1);
+							ELSE
+								INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+							END IF;
+						ELSE
+							IF EXISTS (SELECT * FROM Personne WHERE Representation = pers_desig) THEN
+								pers_id := (SELECT id_pers FROM Personne WHERE Representation = pers_desig LIMIT 1);
+							ELSE
+								INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+							END IF;
+						END IF;
+					ELSE
+						IF pers_note IS NOT NULL THEN
+							IF EXISTS (SELECT * FROM Personne WHERE Notes = pers_note) THEN
+								pers_id := (SELECT id_pers FROM Personne WHERE Notes = pers_note LIMIT 1);
+							ELSE
+								INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+							END IF;
+						ELSE
+							INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+						END IF;
+					END IF;
+				END IF;		
 
 				IF pers_job IS NOT NULL THEN
-					pers_job := (SELECT REPLACE(REPLACE(pers_job,'\(',''),'\)',''));
+					pers_job := (SELECT REPLACE(REPLACE(pers_job,'(',''),')',''));
 
 					tmpI := (select array_length(string_to_array(pers_job, ','), 1) - 1);
 					
@@ -594,26 +750,36 @@ begin
 						tmp5 := regexp_split_to_array(pers_job,',');
 						FOREACH tmp3 IN ARRAY tmp5
 						LOOP
-							metier_desig := tmp3;
+							metier_desig := (SELECT TRIM(tmp3));
 							IF metier_desig IS NOT NULL THEN
-								INSERT INTO Metier(Designation) VALUES (metier_desig) returning id_metier into metier_id;
-								INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
+								IF NOT EXISTS (select * FROM Metier WHERE Designation = metier_desig) THEN
+									INSERT INTO Metier(Designation) VALUES (metier_desig) returning id_metier into metier_id;
+								ELSE
+									metier_id := (select id_metier from Metier where Designation = metier_desig);
+								END IF;
+								IF NOT EXISTS (SELECT * FROM Personne_Metier WHERE id_metier = id_metier AND pers_id = id_pers) THEN
+									INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
+								END IF;
 							END IF;
 						END LOOP;
 						
 						tmpI := 1;
 					ELSE
-						IF pers_job IS NOT NULL THEN
+						pers_Job := (SELECT TRIM(pers_Job));
+						IF NOT EXISTS (select * FROM Metier WHERE Designation = pers_job) THEN
 							INSERT INTO Metier(Designation) VALUES (pers_job) returning id_metier into metier_id;
+						ELSE
+							metier_id := (select id_metier from Metier where Designation = pers_Job);
+						END IF;
+						IF NOT EXISTS (SELECT * FROM Personne_Metier WHERE id_metier = id_metier AND pers_id = id_pers) THEN
 							INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
 						END IF;
 					END IF;						
-				END IF;
-				--END IF;			
+				END IF;	
 			END LOOP;
 		END IF;
 	END IF;
-	
+
     --lambert
 	IF NEW.Ville IS NOT NULL THEN
 		IF regexp_split_to_array(new.Ville,', ') IS NOT NULL THEN
