@@ -596,17 +596,14 @@ begin
 					END IF;
 				END IF;
 
-				if not exists (select * from Personne where Nom=pers_Nom AND Prenom=pers_Prenom AND Representation=pers_desig AND Notes=pers_note) then
+				IF NOT EXISTS (SELECT * FROM Personne WHERE Nom = pers_Nom AND Prenom = pers_Prenom AND Representation = pers_desig AND Notes = pers_note) THEN
 					INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
-				else
+				ELSE
 					pers_id := (select id_pers from Personne where Nom=pers_Nom AND Prenom=pers_Prenom AND Representation=pers_desig AND Notes=pers_note);
-				end if;
-
-				
-				
+				END IF;
 
 				IF pers_job IS NOT NULL THEN
-					pers_job := (SELECT REPLACE(REPLACE(pers_job,'\(',''),'\)',''));
+					pers_job := (SELECT REPLACE(REPLACE(pers_job,'(',''),')',''));
 
 					tmpI := (select array_length(string_to_array(pers_job, ','), 1) - 1);
 					
@@ -615,20 +612,32 @@ begin
 						tmp5 := regexp_split_to_array(pers_job,',');
 						FOREACH tmp3 IN ARRAY tmp5
 						LOOP
-							metier_desig := tmp3;
+							metier_desig := (SELECT TRIM(tmp3));
 							IF metier_desig IS NOT NULL THEN
-								INSERT INTO Metier(Designation) VALUES (metier_desig) returning id_metier into metier_id;
-								INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
+								IF NOT EXISTS (select * FROM Metier WHERE Designation = metier_desig) THEN
+									INSERT INTO Metier(Designation) VALUES (metier_desig) returning id_metier into metier_id;
+								ELSE
+									metier_id := (select id_metier from Metier where Designation = metier_desig);
+								END IF;
+								IF NOT EXISTS (SELECT * FROM Personne_Metier WHERE id_metier = id_metier AND pers_id = id_pers) THEN
+									INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
+								END IF;
 							END IF;
 						END LOOP;
 						
 						tmpI := 1;
 					ELSE
-						INSERT INTO Metier(Designation) VALUES (pers_job) returning id_metier into metier_id;
-						INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
+						pers_Job := (SELECT TRIM(pers_Job));
+						IF NOT EXISTS (select * FROM Metier WHERE Designation = pers_job) THEN
+							INSERT INTO Metier(Designation) VALUES (pers_job) returning id_metier into metier_id;
+						ELSE
+							metier_id := (select id_metier from Metier where Designation = pers_Job);
+						END IF;
+						IF NOT EXISTS (SELECT * FROM Personne_Metier WHERE id_metier = id_metier AND pers_id = id_pers) THEN
+							INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
+						END IF;
 					END IF;						
-				END IF;
-				--END IF;			
+				END IF;	
 			END LOOP;
 		END IF;
 	END IF;
