@@ -553,7 +553,7 @@ begin
 					END IF;
 
 					IF tmp9 IS NOT NULL THEN
-						pers_Prenom := tmp9;
+						pers_Prenom := (SELECT TRIM(tmp9));
 						IF pers_Prenom = '' THEN
 							pers_Prenom = NULL;
 						END IF;
@@ -566,13 +566,34 @@ begin
 					END IF;
 
 					IF tmp9 IS NOT NULL THEN
-						pers_desig := pers_note || ' ' || tmp9;
+						pers_desig := pers_note || tmp9;
 						pers_desig = (SELECT REPLACE(pers_desig,',',''));
 					END IF;
 
 					pers_note = (SELECT Substring(pers_Prenom,strpos(pers_Prenom,'voir aussi'),length(pers_Prenom)));
 				ELSE
 					pers_note = tmp2;
+				END IF;
+
+				IF pers_Prenom = '' THEN
+					pers_Prenom = NULL;
+				ELSE
+					pers_Prenom = (SELECT TRIM(pers_Prenom));
+				END IF;
+
+				IF pers_desig = '' THEN
+					pers_desig = NULL;
+				ELSE
+					pers_desig = (SELECT TRIM(pers_desig));
+				END IF;
+
+				IF pers_note = '' THEN
+					pers_note = NULL;
+				ELSE
+					pers_note = (SELECT TRIM(pers_note));
+					IF pers_note = pers_Prenom THEN
+						pers_note = NULL;
+					END IF;
 				END IF;
 
 				if not exists (select * from Personne where Nom=pers_Nom AND Prenom=pers_Prenom AND Representation=pers_desig AND Notes=pers_note) then
@@ -603,17 +624,15 @@ begin
 						
 						tmpI := 1;
 					ELSE
-						IF pers_job IS NOT NULL THEN
-							INSERT INTO Metier(Designation) VALUES (pers_job) returning id_metier into metier_id;
-							INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
-						END IF;
+						INSERT INTO Metier(Designation) VALUES (pers_job) returning id_metier into metier_id;
+						INSERT INTO Personne_Metier(id_pers,id_metier) VALUES(pers_id,metier_id);
 					END IF;						
 				END IF;
 				--END IF;			
 			END LOOP;
 		END IF;
 	END IF;
-	
+
     --lambert
 	IF NEW.Ville IS NOT NULL THEN
 		IF regexp_split_to_array(new.Ville,', ') IS NOT NULL THEN
