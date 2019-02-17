@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Test {
-    public static void main(String[] args){
+    /*public static void main(String[] args){
         ArrayList<Line> lines = new ArrayList<Line>();
         lines.add(new Line("Iconographique","index_Icono",0));
         lines.add(new Line("Support","taille",0));
@@ -19,5 +19,5 @@ public class Test {
         order.put(new Line("Support","taille",0),Boolean.TRUE);
         Requete requete = new Requete(lines,crits,3,order);
         System.out.println(requete.getSqlRequest());
-    }
+    }*/
 }
