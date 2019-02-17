@@ -253,6 +253,28 @@ CREATE INDEX datePhoA ON Photographie_Date(id_photo);
 DROP INDEX IF EXISTS datePhoB;
 CREATE INDEX datePhoB ON Photographie_Date(id_date);
 
+CREATE OR REPLACE FUNCTION norm_text_latin(character varying) 
+RETURNS character varying AS $$
+DECLARE 
+        p_str    alias for $1; 
+        v_str    varchar; 
+BEGIN 
+        select translate(p_str, 'ÀÁÂÃÄÅ', 'AAAAAA') into v_str; 
+        select translate(v_str, 'ÉÈËÊ', 'EEEE') into v_str; 
+        select translate(v_str, 'ÌÍÎÏ', 'IIII') into v_str; 
+        select translate(v_str, 'ÌÍÎÏ', 'IIII') into v_str; 
+        select translate(v_str, 'ÒÓÔÕÖ', 'OOOOO') into v_str; 
+        select translate(v_str, 'ÙÚÛÜ', 'UUUU') into v_str; 
+        select translate(v_str, 'àáâãäå', 'aaaaaa') into v_str; 
+        select translate(v_str, 'èéêë', 'eeee') into v_str; 
+        select translate(v_str, 'ìíîï', 'iiii') into v_str; 
+        select translate(v_str, 'òóôõö', 'ooooo') into v_str; 
+        select translate(v_str, 'ùúûü', 'uuuu') into v_str; 
+        select translate(v_str, 'Çç', 'Cc') into v_str; 
+        return v_str; 
+END;
+$$LANGUAGE 'plpgsql' VOLATILE; 
+
 -- Fonctions
 create or replace function insert_tout()
 returns trigger as $$
@@ -508,9 +530,9 @@ begin
 		IF tmp2 IS NOT NULL THEN
 			FOREACH tmp2 IN ARRAY tmp4
 			LOOP
-				tmp9 := tmp2;
+				tmp9 := norm_text_latin(tmp2);
 
-				pers_Nom := (SELECT SUBSTRING(tmp2,'((-[A-Z]|[A-Z]){2,}[,]{0,1})'));
+				pers_Nom := (SELECT SUBSTRING(tmp9,'((-[A-Z]|[A-Z]){2,}[,]{0,1})'));
 
 				tmp9 = (SELECT REPLACE(tmp9,pers_Nom,''));
 				
@@ -524,15 +546,26 @@ begin
 						tmp9 = (SELECT REPLACE(tmp9,pers_job,''));
 					END IF;
 					
-					pers_Prenom := (SELECT SUBSTRING(tmp9,'([A-Z]{1}?([a-z\w]{1,}|\.)).?( [A-Z][a-z]{1,} ?([a-z\w]{1,})){1,}'));
-					tmp9 = (SELECT REPLACE(tmp9,pers_Prenom,''));
+					pers_note := (SELECT SUBSTRING(tmp9, ', [a-z]{1,}'));
+					IF pers_note IS NOT NULL THEN
+						pers_note = (SELECT REPLACE(pers_note,',',''));
+						tmp9 = (SELECT REPLACE(tmp9,pers_note,''));
+						tmp9 = (SELECT REPLACE(tmp9,'voir aussi',''));
+					END IF;
+
+					pers_Prenom := (SELECT SUBSTRING(tmp9, ', [a-z]{1,}'));
 					
+					IF pers_Prenom IS NOT NULL THEN
+						pers_Prenom = (SELECT REPLACE(pers_note,' ',''));
+						tmp9 = (SELECT REPLACE(tmp9,pers_Prenom,''));
+					END IF;
+
 					pers_desig := (SELECT SUBSTRING(tmp9,'[a-z]{2,}'));
 				END IF;
 				
 				
 				--pers_desig := (SELECT SUBSTRING(SUBSTRING(SUBSTRING(SUBSTRING(tmp2,pers_Nom),pers_job),pers_Prenom),'[a-z]{1,}'));
-				pers_note := (SELECT SUBSTRING(tmp9,'voir aussi%'),'voir aussi');
+				--pers_note := tmp9;--(SELECT SUBSTRING(tmp2,'voir aussi%'),'voir aussi');
 				
 				
 				--pers_Nom := (SELECT SUBSTRING(tmp2,'([A-Z]?[-A-Z]){2,}'));
@@ -543,7 +576,15 @@ begin
 					INSERT INTO Personne(Notes) VALUES (pers_note) returning id_pers into pers_id;
 				ELSE
 				*/
-				INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+
+				if not exists (select * from Personne where Nom=pers_Nom AND Prenom=pers_Prenom AND Representation=pers_desig AND Notes=pers_note) then
+					INSERT INTO Personne(Nom,Prenom,Representation,Notes) VALUES (pers_Nom,pers_Prenom,pers_desig,pers_note) returning id_pers into pers_id;
+				else
+					pers_id := (select id_pers from Personne where Nom=pers_Nom AND Prenom=pers_Prenom AND Representation=pers_desig AND Notes=pers_note);
+				end if;
+
+				
+				
 
 				IF pers_job IS NOT NULL THEN
 					pers_job := (SELECT SUBSTRING(SUBSTRING(pers_job,'\('),'\)'));
