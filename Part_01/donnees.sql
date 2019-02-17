@@ -393,6 +393,7 @@ begin
 							END IF;
 
 							IF cardinality(regexp_split_to_array(date_cache[2],'-')) = 2 THEN
+							--Here
 								date_m := (regexp_split_to_array(date_cache[2],'-'))[1];
 								date_m_b := (regexp_split_to_array(date_cache[2],'-'))[2];
 							ELSE
@@ -407,6 +408,7 @@ begin
 							END IF;
 						WHEN cardinality(date_cache) = 2 THEN
 							IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
+							--Here
 								date_m := (regexp_split_to_array(date_cache[1],'-'))[1];
 								date_m_b := (regexp_split_to_array(date_cache[1],'-'))[2];
 							ELSE
@@ -573,6 +575,7 @@ begin
 					pers_note = (SELECT Substring(pers_Prenom,strpos(pers_Prenom,'voir aussi'),length(pers_Prenom)));
 				ELSE
 					pers_note = tmp2;
+					pers_Nom = (SELECT SUBSTRING(pers_note,'[A-Z]{2,}'));
 				END IF;
 
 				IF pers_Prenom = '' THEN
