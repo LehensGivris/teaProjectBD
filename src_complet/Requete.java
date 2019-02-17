@@ -161,13 +161,13 @@ public class Requete {
 			if(!result.toString().endsWith(" where ")){
 				result.append(" and ");
 			}
-			result.append(" Cindoc_Photographie.id_photo=Photographie.id_photo ");
+			result.append(" Cindoc_Photographie.id_photo=Photographie.id_photo and Cindoc_Photographique.index_cindoc=Cindoc.index_cindoc");
 		}
 		if(tables.contains("Iconographique")){
 			if(!result.toString().endsWith(" where ")){
 				result.append(" and ");
 			}
-			result.append(" Iconographique_Photographie.id_photo=Photographie.id_photo ");
+			result.append(" Iconographique_Photographie.id_photo=Photographie.id_photo and Iconographique_Photographie.index_icono=Inconographique.index_icono");
 		}
 		if(tables.contains("Sujet")){
 			if(!result.toString().endsWith(" where ")){
@@ -191,7 +191,7 @@ public class Requete {
 			if(!result.toString().endsWith(" where ")){
 				result.append(" and ");
 			}
-			result.append(" Fichier_Photographie.id_photo=Photographie.id_photo and Fichier_Photographie.");
+			result.append(" Fichier_Photographie.id_photo=Photographie.id_photo and Fichier_Photographie.id_fichier=Fichier.id_fichier");
 		}
 		if(tables.contains("Lambert93")){
 			if(!result.toString().endsWith(" where ")){
