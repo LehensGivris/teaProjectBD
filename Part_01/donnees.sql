@@ -532,15 +532,14 @@ begin
 			LOOP
 				tmp9 := norm_text_latin(tmp2);
 
-				pers_Nom := (SELECT SUBSTRING(tmp9,'((-[A-Z]|[A-Z]){2,}[,]{0,1})'));
+				pers_Nom := (SELECT SUBSTRING(tmp9,'((([ A-Z]|-[A-Z]|[A-Z]){2,}[,]{0,1})[ ]{1,})'));
 
 				tmp9 = (SELECT REPLACE(tmp9,pers_Nom,''));
 				
 				IF pers_Nom IS NOT NULL THEN
 					pers_Nom = (SELECT REPLACE(pers_Nom,',',''));
+					pers_Nom = (SELECT TRIM(pers_Nom));
 					pers_job := (SELECT SUBSTRING(tmp9,'\(.*.\)'));
-					
-					--SELECT SUBSTRING(tmp9,'[A-Z]') INTO tmp9;
 					
 					IF pers_Job IS NOT NULL THEN
 						tmp9 = (SELECT REPLACE(tmp9,pers_job,''));
@@ -553,14 +552,25 @@ begin
 						tmp9 = (SELECT REPLACE(tmp9,'voir aussi',''));
 					END IF;
 
-					pers_Prenom := (SELECT SUBSTRING(tmp9, ', [a-z]{1,}'));
-					
-					IF pers_Prenom IS NOT NULL THEN
-						pers_Prenom = (SELECT REPLACE(pers_note,' ',''));
-						tmp9 = (SELECT REPLACE(tmp9,pers_Prenom,''));
+					IF tmp9 IS NOT NULL THEN
+						pers_Prenom := tmp9;
+						IF pers_Prenom == '' THEN
+							pers_Prenom = NULL;
+						END IF;
+						IF pers_Prenom IS NOT NULL THEN
+							pers_Prenom = (SELECT TRIM(pers_Prenom));
+							tmp9 = pers_Prenom;
+							pers_Prenom = (SELECT SUBSTRING(pers_Prenom,0,strpos(pers_Prenom,',')));
+							tmp9 = (SELECT REPLACE(tmp9,pers_Prenom,''));
+						END IF;
 					END IF;
 
-					pers_desig := (SELECT SUBSTRING(tmp9,'[a-z]{2,}'));
+					IF tmp9 IS NOT NULL THEN
+						pers_desig := pers_note || ' ' || tmp9;
+						pers_desig = (SELECT REPLACE(pers_desig,',',''));
+					END IF;
+
+					pers_note = (SELECT Substring(pers_Prenom,strpos(pers_Prenom,'voir aussi'),length(pers_Prenom)));
 				END IF;
 				
 				
