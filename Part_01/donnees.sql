@@ -273,7 +273,58 @@ BEGIN
         select translate(v_str, 'Çç', 'Cc') into v_str; 
         return v_str; 
 END;
-$$LANGUAGE 'plpgsql' VOLATILE; 
+$$LANGUAGE 'plpgsql'; 
+
+CREATE OR REPLACE FUNCTION verifMois(month character varying)
+RETURNS character varying AS $$
+DECLARE
+	testM TEXT;
+BEGIN
+	testM := (SELECT LOWER(norm_text_latin(month)));
+	IF testM IS NULL OR testM = '' THEN
+		RETURN NULL;
+	END IF; 
+
+	IF (SELECT month SIMILAR TO '[mai]{2,3}') THEN
+		RETURN 'mai';
+	END IF;
+	IF (SELECT month SIMILAR TO '[mars]{3,4}') THEN
+		RETURN 'mars';
+	END IF;
+	IF (SELECT month SIMILAR TO '[juin]{2,4}') THEN
+		RETURN 'juin';
+	END IF;
+	IF (SELECT month SIMILAR TO '[aout]{2,4}') THEN
+		RETURN 'aout';
+	END IF;
+	IF (SELECT month SIMILAR TO '[avril]{3,5}') THEN
+		RETURN 'avril';
+	END IF;
+	IF (SELECT month SIMILAR TO '[janvier]{6,7}') THEN
+		RETURN 'janvier';
+	END IF;
+	IF (SELECT month SIMILAR TO '[fevrier]{6,7}') THEN
+		RETURN 'fevrier';
+	END IF;
+	IF (SELECT month SIMILAR TO '[juillet]{4,7}') THEN
+		RETURN 'juillet';
+	END IF;
+	IF (SELECT month SIMILAR TO '[octobre]{4,7}') THEN
+		RETURN 'octobre';
+	END IF;
+	IF (SELECT month SIMILAR TO '[novembre]{6,8}') THEN
+		RETURN 'novembre';
+	END IF;
+	IF (SELECT month SIMILAR TO '[decembre]{6,8}') THEN
+		RETURN 'decembre';
+	END IF;
+	IF (SELECT month SIMILAR TO '[septembre]{7,9}') THEN
+		RETURN 'septembre';
+	END IF;
+	
+	RETURN testM;
+END;
+$$LANGUAGE 'plpgsql';
 
 -- Fonctions
 create or replace function insert_tout()
@@ -394,10 +445,10 @@ begin
 
 							IF cardinality(regexp_split_to_array(date_cache[2],'-')) = 2 THEN
 							--Here
-								date_m := (regexp_split_to_array(date_cache[2],'-'))[1];
-								date_m_b := (regexp_split_to_array(date_cache[2],'-'))[2];
+								date_m := (SELECT verifMois((regexp_split_to_array(date_cache[2],'-'))[1]));
+								date_m_b := (SELECT verifMois((regexp_split_to_array(date_cache[2],'-'))[2]));
 							ELSE
-								date_m := (date_cache[2]);
+								date_m := (SELECT verifMois(date_cache[2]));
 							END IF;
 
 							IF cardinality(regexp_split_to_array(date_cache[3],'-')) = 2 THEN
@@ -409,10 +460,10 @@ begin
 						WHEN cardinality(date_cache) = 2 THEN
 							IF cardinality(regexp_split_to_array(date_cache[1],'-')) = 2 THEN
 							--Here
-								date_m := (regexp_split_to_array(date_cache[1],'-'))[1];
-								date_m_b := (regexp_split_to_array(date_cache[1],'-'))[2];
+								date_m := (SELECT verifMois((regexp_split_to_array(date_cache[1],'-'))[1]));
+								date_m_b := (SELECT verifMois((regexp_split_to_array(date_cache[1],'-'))[2]));
 							ELSE
-								date_m := (date_cache[1]);
+								date_m := (SELECT verifMois(date_cache[1]));
 							END IF;
 
 							IF cardinality(regexp_split_to_array(date_cache[2],'-')) = 2 THEN
